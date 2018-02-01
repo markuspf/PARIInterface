@@ -3,8 +3,18 @@
 #
 # Implementations
 #
-InstallGlobalFunction( PARIInterface_Example,
-function()
-	Print( "This is a placeholder function, replace it with your own code.\n" );
+
+InstallGlobalFunction( PARIPolynomial,
+function(p)
+    local coeffs;
+    coeffs := CoefficientsOfUnivariatePolynomial(p);
+    PARIGEN_UNIPOLY(coeffs);
+end );
+
+InstallGlobalFunction( PARIGaloisGroup,
+function(6)
+    local coeffs;
+    coeffs := CoefficientsOfUnivariatePolynomial(p);
+    PARIGEN_POLGALOIS(coeffs);
 end );
 

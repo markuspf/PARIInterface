@@ -13,7 +13,7 @@ lib_LTLIBRARIES = PARIInterface.la
 
 PARIInterface_la_SOURCES = src/PARIInterface.c
 PARIInterface_la_CPPFLAGS = $(GAP_CPPFLAGS) -DCONFIG_H
-PARIInterface_la_LDFLAGS = -module -avoid-version
+PARIInterface_la_LDFLAGS = -module -avoid-version -lpari
 if SYS_IS_CYGWIN
 PARIInterface_la_LDFLAGS += -no-undefined -version-info 0:0:0 
 PARIInterface_la_LDFLAGS += -Wl,$(GAPROOT)/bin/$(GAPARCH)/gap.dll
