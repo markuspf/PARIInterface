@@ -8,12 +8,12 @@ InstallGlobalFunction( PARIPolynomial,
 function(p)
     local coeffs;
     coeffs := CoefficientsOfUnivariatePolynomial(p);
-    PARIGEN_UNIPOLY(coeffs);
+    return PARI_UNIPOLY(coeffs);
 end );
 
 InstallGlobalFunction( PARIGaloisGroup,
 function(p)
     local coeffs;
     coeffs := CoefficientsOfUnivariatePolynomial(p);
-    PARIGEN_POLGALOIS(coeffs);
+    return PARI_POL_GALOIS_GROUP(coeffs);
 end );
