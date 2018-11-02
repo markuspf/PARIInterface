@@ -12,9 +12,8 @@ function(p)
 end );
 
 InstallGlobalFunction( PARIGaloisGroup,
-function(6)
+function(p)
     local coeffs;
     coeffs := CoefficientsOfUnivariatePolynomial(p);
     PARIGEN_POLGALOIS(coeffs);
 end );
-

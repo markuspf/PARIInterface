@@ -5,6 +5,7 @@
 #include <pari/pari.h>
 #include "src/compiled.h"          /* GAP headers */
 
+#include <gmp.h>
 
 #define PARI_T_GEN 0          // Generic PARI object
 
@@ -132,6 +133,9 @@ static Obj PariVecSmallToList(GEN v)
     return res;
 }
 
+//
+// Convert a PARI Gen to a GAP Obj
+//
 static Obj PariGENToObj(GEN v)
 {
     Obj res;
@@ -139,11 +143,36 @@ static Obj PariGENToObj(GEN v)
     case t_INT:
         return INTOBJ_INT(itos(v));
         break;
+    case t_INTMOD:
+        break;
+    case t_FRAC:
+        break;
+    case t_FFELT:
+        break;
+    case t_PADIC:
+        break;
+    case t_POLMOD:
+        break;
+    case t_POL:
+        break;
+    case t_SER:
+        break;
+    case t_RFRAC:
+        break;
     case t_VEC:
         return PariVecToList(v);
         break;
+    case t_COL:
+        break;
+    case t_MAT:
+        break;
     case t_VECSMALL:
         return PariVecSmallToList(v);
+        break;
+    case t_STR:
+        return NEW_CSTRING(GSTR(v));
+        break;
+    case t_ERROR:
         break;
     default:
         ErrorQuit("not a supported type", 0L, 0L);
@@ -152,7 +181,12 @@ static Obj PariGENToObj(GEN v)
     return res;
 }
 
-Obj FuncPARIGEN_VECINT(Obj self, Obj list)
+
+static GEN ObjToPariGEN(Obj o)
+{
+}
+
+Obj FuncPARI_VECINT(Obj self, Obj list)
 {
     GEN v = ListToPariVec(list);
     return PariGENToObj(v);
@@ -182,7 +216,7 @@ GEN PariGENUniPoly(Obj poly)
     return v;
 }
 
-Obj FuncPARIGEN_UNIPOLY(Obj self, Obj poly)
+Obj FuncPARI_UNIPOLY(Obj self, Obj poly)
 {
     GEN v = PariGENUniPoly(poly);
     output(v);
@@ -190,7 +224,7 @@ Obj FuncPARIGEN_UNIPOLY(Obj self, Obj poly)
     return 0;
 }
 
-Obj FuncPARIGEN_POLGALOIS(Obj self, Obj poly)
+Obj FuncPARI_POL_GALOIS_GROUP(Obj self, Obj poly)
 {
     GEN v, w;
     v = PariGENUniPoly(poly);
@@ -199,7 +233,19 @@ Obj FuncPARIGEN_POLGALOIS(Obj self, Obj poly)
     output(w);
 }
 
-Obj FuncPARIInit(Obj self, Obj stack, Obj primes)
+Obj FuncPARI_POL_FACTOR_MOD_P(Obj self, Obj poly, Obj p)
+{
+    GEN v, w, x;
+
+    v = PariGENUniPoly(poly);
+    output(v);
+    x = stoi(Int8_ObjInt(p));
+    output(x);
+    w = FpX_factor(v, x);
+    output(w);
+}
+
+Obj FuncPARI_INIT(Obj self, Obj stack, Obj primes)
 {
     if(!IS_INTOBJ(stack))
         ErrorQuit("<stack> has to be an integer", 0L, 0L);
@@ -216,10 +262,11 @@ typedef Obj (* GVarFunc)(/*arguments*/);
 
 // Table of functions to export
 static StructGVarFunc GVarFuncs [] = {
-    GVAR_FUNC(PARIInit, 2, "stack, primes"),
-    GVAR_FUNC(PARIGEN_VECINT, 1, "list"),
-    GVAR_FUNC(PARIGEN_UNIPOLY, 1, "poly"),
-    GVAR_FUNC(PARIGEN_POLGALOIS, 1, "poly"),
+    GVAR_FUNC(PARI_INIT, 2, "stack, primes"),
+    GVAR_FUNC(PARI_VECINT, 1, "list"),
+    GVAR_FUNC(PARI_UNIPOLY, 1, "poly"),
+    GVAR_FUNC(PARI_POL_GALOIS_GROUP, 1, "poly"),
+    GVAR_FUNC(PARI_POL_FACTOR_MOD_P, 2, "poly, p"),
 	{ 0 } /* Finish with an empty entry */
 };
 
