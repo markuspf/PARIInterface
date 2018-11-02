@@ -12,6 +12,8 @@ addons:
     - libreadline-dev:i386
     - gcc-multilib
     - g++-multilib
+    - libpari
+    - libpari-dev
 
 matrix:
   include:
