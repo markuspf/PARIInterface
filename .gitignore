@@ -26,9 +26,6 @@
 /aclocal.m4
 /autom4te.cache/
 /bin/
-/config.log
-/config.status
-/configure
 /lib/
 /libtool
 /cnf/dd
@@ -47,7 +44,6 @@
 /cnf/m4/ltversion.m4
 /cnf/m4/lt~obsolete.m4
 /Makefile
-/Makefile.in
 /src/pkgconfig.h
 /src/stamp-h1
 

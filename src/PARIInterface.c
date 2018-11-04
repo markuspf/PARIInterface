@@ -15,6 +15,7 @@
 
 static Obj PARI_GEN_Type; // Imported from GAP
 
+// TODO:?
 static Obj NewPARIGEN()
 {
     Obj gen;
@@ -23,9 +24,12 @@ static Obj NewPARIGEN()
     PARI_DAT_TYPE(gen) = PARI_T_GEN;
 }
 
+//
 // Functions converting between pari and mpz
 //
 // These are borrowed from the paritwine library
+// and used to convert between PARI integers and GAP integers
+//
 static void mpz_set_GEN (mpz_ptr z, GEN x)
    /* Sets z to x, which needs to be of type t_INT. */
 {
@@ -76,36 +80,15 @@ Obj FuncPARIGEN_INT(Obj self, Obj intobj)
 
 }
 
-static GEN ListToPariVec(Obj list);
-static Obj PariVecToList(GEN v);
-
-static GEN ListToPariVec(Obj list)
-{
-    // TODO: If we want this to be strictly correct, we need to use the
-    //       traversal code...
-    UInt len = LEN_LIST(list);
-    GEN v = cgetg(len + 1, t_VEC);
-    for(UInt i = 1; i <= len; i++ ) {
-        Obj elt = ELM_LIST(list, i);
-        if(IS_INTOBJ(elt)) {
-            v[i] = stoi(Int8_ObjInt(elt));
-        } else if(IS_LIST(elt)) {
-            v[i] = ListToPariVec(elt);
-        } else {
-            ErrorQuit("encountered unhandled object", 0L, 0L);
-        }
-    }
-    return v;
-}
-
-// Converts a PARI GEN to the corresponding GAP
-// object
 //
-// Currently supports t_INT, t_VEC, and t_VECSMALL.
-
+// Conversions from PARI GEN to corresponding GAP Obj
+//
+// Currently supports t_INT, t_VEC, t_VECSMALL, t_STR.
+//
 static Obj PariGENToObj(GEN v);
 static Obj PariVecToList(GEN v);
 static Obj PariVecSmallToList(GEN v);
+static Obj PariVecToList(GEN v);
 
 static Obj PariVecToList(GEN v)
 {
@@ -133,9 +116,7 @@ static Obj PariVecSmallToList(GEN v)
     return res;
 }
 
-//
-// Convert a PARI Gen to a GAP Obj
-//
+// Main dispatch
 static Obj PariGENToObj(GEN v)
 {
     Obj res;
@@ -143,28 +124,8 @@ static Obj PariGENToObj(GEN v)
     case t_INT:
         return INTOBJ_INT(itos(v));
         break;
-    case t_INTMOD:
-        break;
-    case t_FRAC:
-        break;
-    case t_FFELT:
-        break;
-    case t_PADIC:
-        break;
-    case t_POLMOD:
-        break;
-    case t_POL:
-        break;
-    case t_SER:
-        break;
-    case t_RFRAC:
-        break;
     case t_VEC:
         return PariVecToList(v);
-        break;
-    case t_COL:
-        break;
-    case t_MAT:
         break;
     case t_VECSMALL:
         return PariVecSmallToList(v);
@@ -172,20 +133,68 @@ static Obj PariGENToObj(GEN v)
     case t_STR:
         return NEW_CSTRING(GSTR(v));
         break;
+    case t_INTMOD:
+    case t_FRAC:
+    case t_FFELT:
+    case t_PADIC:
+    case t_POLMOD:
+    case t_POL:
+    case t_SER:
+    case t_RFRAC:
+    case t_COL:
+    case t_MAT:
     case t_ERROR:
-        break;
     default:
+        // TODO: Find names for the types
         ErrorQuit("not a supported type", 0L, 0L);
         break;
     }
     return res;
 }
 
+//
+// Converts a GAP Obj to a PARI GEN (if possible)
+//
+static GEN ListToPariVec(Obj list);
 
-static GEN ObjToPariGEN(Obj o)
+static GEN ListToPariVec(Obj list)
 {
+    // TODO: If we want this to be strictly correct, we need to use the
+    //       traversal code...
+    UInt len = LEN_LIST(list);
+    GEN v = cgetg(len + 1, t_VEC);
+    for(UInt i = 1; i <= len; i++ ) {
+        Obj elt = ELM_LIST(list, i);
+        if(IS_INTOBJ(elt)) {
+            v[i] = stoi(Int8_ObjInt(elt));
+        } else if(IS_LIST(elt)) {
+            v[i] = ListToPariVec(elt);
+        } else {
+            ErrorQuit("encountered unhandled object", 0L, 0L);
+        }
+    }
+    return v;
 }
 
+static GEN ObjToPariGEN(Obj obj)
+{
+    switch(TNUM_OBJ(obj)) {
+    case T_INT:
+        break;
+    case T_FFE:
+        break;
+    case T_PLIST:
+        break;
+    default:
+        ErrorQuit("not a supported type", 0L, 0L);
+        break;
+    }
+}
+
+
+//
+// GAP Facing functions
+//
 Obj FuncPARI_VECINT(Obj self, Obj list)
 {
     GEN v = ListToPariVec(list);
@@ -231,6 +240,8 @@ Obj FuncPARI_POL_GALOIS_GROUP(Obj self, Obj poly)
     output(v);
     w = polgalois(v, DEFAULTPREC);
     output(w);
+
+    return 0;
 }
 
 Obj FuncPARI_POL_FACTOR_MOD_P(Obj self, Obj poly, Obj p)
@@ -243,6 +254,8 @@ Obj FuncPARI_POL_FACTOR_MOD_P(Obj self, Obj poly, Obj p)
     output(x);
     w = FpX_factor(v, x);
     output(w);
+
+    return 0;
 }
 
 Obj FuncPARI_INIT(Obj self, Obj stack, Obj primes)
