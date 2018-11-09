@@ -11,7 +11,8 @@ MODULE_NAME = PARIInterface
 SOURCES = src/PARIInterface.c
 
 TOP = $(shell pwd)
-
+EXTRA_CPPFLAGS =
+EXTRA_LDFLAGS =
 
 ########################################################################
 # Do not edit below unless you know what you're doing
@@ -80,17 +81,17 @@ DEPFLAGS = -MQ "$@" -MMD -MP -MF $(@D)/$(*F).d
 
 # build rule for C code
 gen/%.lo: %.c
-	@$(QUIET_GAC)$(GAC) -d -p "$(DEPFLAGS)" -p "$(PARI_CPPFLAGS)" -c $< -o $@
+	@$(QUIET_GAC)$(GAC) -d -p "$(DEPFLAGS)" -p "$(EXTRA_CPPFLAGS)" -c $< -o $@
 
 # build rule for C++ code
 gen/%.lo: %.cc
-	@$(QUIET_GAC)$(GAC) -d -p "$(DEPFLAGS)" -p "$(PARI_CPPFLAGS)" -c $< -o $@
+	@$(QUIET_GAC)$(GAC) -d -p "$(DEPFLAGS)" -p "$(EXTRA_CPPFLAGS)" -c $< -o $@
 
 # build rule for linking all object files together into a kernel extension
 # TODO: detect pari lib and header files
 $(GAPINSTALLIB): $(OBJS)
 	@$(MKDIR_P) $(BINARCHDIR)
-	@$(QUIET_GAC)$(GAC) -d -p "$(DEPFLAGS)" $(OBJS) -L "$(PARI_LDFLAGS)" -o $@
+	@$(QUIET_GAC)$(GAC) -d -p "$(DEPFLAGS)" $(OBJS) -L "$(EXTRA_LDFLAGS)" -o $@
 
 clean:
 	rm -rf $(BINARCHDIR)
@@ -114,6 +115,7 @@ Makefile: configure Makefile.in
 ########################################################################
 # PARI
 ########################################################################
+ifeq ($(BUILD_PARI),yes)
 PARI_BUILDDIR := extern/build/pari
 PARI_PREFIX := extern/install/pari
 PARI_FILES := $(PARI_PREFIX)/lib/libpari.so
@@ -121,6 +123,9 @@ PARI_DOWNLOAD = https://pari.math.u-bordeaux.fr/pub/pari/unix/pari-2.11.0.tar.gz
 WGET = wget -N
 PARI_CPPFLAGS = -I $(PARI_PREFIX)/include
 PARI_LDFLAGS = -R $(TOP)/$(PARI_PREFIX)/lib -L$(PARI_PREFIX)/lib -lpari
+
+EXTRA_CPPFLAGS += $(PARI_CPPFLAGS)
+EXTRA_LDFLAGS += $(PARI_LDFLAGS) 
 
 ########################################################################
 #
@@ -141,6 +146,14 @@ pariclean:
 	rm -rf $(PARI_PREFIX)
 .PHONY: pariclean
 
+else
+
+EXTRA_LDFLAGS += -lpari
+
+pari:	
+	echo "Using system PARI, nothing to be done"
+
+endif
 ########################################################################
 # Makefile debugging trick:
 # call print-VARIABLE to see the runtime value of any variable
