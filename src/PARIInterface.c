@@ -228,7 +228,7 @@ Obj FuncPARI_POL_GALOIS_GROUP(Obj self, Obj poly)
     w = polgalois(v, DEFAULTPREC);
     output(w);
 
-    return 0;
+    return INTOBJ_INT(0);
 }
 
 Obj FuncPARI_POL_FACTOR_MOD_P(Obj self, Obj poly, Obj p)
