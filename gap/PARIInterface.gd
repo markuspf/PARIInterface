@@ -19,5 +19,6 @@ BindGlobal( "PARI_GEN_Type", NewType(PARI_GEN_Family, IsPARIObj) );
 #! @Description
 #!   Turn an univariate polynomial into a PARI polynomial
 DeclareGlobalFunction( "PARIInitialise" );
+DeclareGlobalFunction( "PARIClose" );
 DeclareGlobalFunction( "PARIPolynomial" );
 DeclareGlobalFunction( "PARIGaloisGroup" );

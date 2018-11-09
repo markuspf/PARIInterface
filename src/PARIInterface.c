@@ -261,6 +261,12 @@ Obj FuncPARI_INIT(Obj self, Obj stack, Obj primes)
     ulong maxprime = INT_INTOBJ(primes);
 
     pari_init(size, maxprime);
+    return PariGENToObj(pari_version());
+}
+
+Obj FuncPARI_CLOSE(Obj self)
+{
+    pari_close();
 }
 
 typedef Obj (* GVarFunc)(/*arguments*/);
@@ -268,6 +274,7 @@ typedef Obj (* GVarFunc)(/*arguments*/);
 // Table of functions to export
 static StructGVarFunc GVarFuncs [] = {
     GVAR_FUNC(PARI_INIT, 2, "stack, primes"),
+    GVAR_FUNC(PARI_CLOSE, 0, ""),
     GVAR_FUNC(PARI_GET_VERSION, 0, ""),
     GVAR_FUNC(PARI_VECINT, 1, "list"),
     GVAR_FUNC(PARI_UNIPOLY, 1, "poly"),
