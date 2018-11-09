@@ -162,6 +162,30 @@ static GEN IntToPariGEN(Obj o)
     return r;
 }
 
+static GEN PariGENUniPoly(Obj poly)
+{
+    UInt len;
+    UInt deg;
+    GEN v;
+
+    len = LEN_LIST(poly);
+    // Zero polynomial
+    if (len == 0) {
+        v = cgetg(2, t_POL);
+    } else {
+        deg = len - 1;
+        v = cgetg(3 + deg, t_POL);
+        for(UInt i = 2; i < 2 + len; i++) {
+            Obj elt = ELM_LIST(poly, i - 1);
+            gel(v, i) = stoi(Int8_ObjInt(elt));
+        }
+    }
+    v[1] = evalsigne(0);
+    v = normalizepol(v);
+
+    return v;
+}
+
 static GEN ObjToPariGEN(Obj obj)
 {
     // Replace tnum switch by IS_xxx macros?
@@ -186,30 +210,6 @@ Obj FuncPARI_VECINT(Obj self, Obj list)
 {
     GEN v = ListToPariVec(list);
     return PariGENToObj(v);
-}
-
-GEN PariGENUniPoly(Obj poly)
-{
-    UInt len;
-    UInt deg;
-    GEN v;
-
-    len = LEN_LIST(poly);
-    // Zero polynomial
-    if (len == 0) {
-        v = cgetg(2, t_POL);
-    } else {
-        deg = len - 1;
-        v = cgetg(3 + deg, t_POL);
-        for(UInt i = 2; i < 2 + len; i++) {
-            Obj elt = ELM_LIST(poly, i - 1);
-            gel(v, i) = stoi(Int8_ObjInt(elt));
-        }
-    }
-    v[1] = evalsigne(0);
-    v = normalizepol(v);
-
-    return v;
 }
 
 Obj FuncPARI_UNIPOLY(Obj self, Obj poly)
@@ -245,6 +245,11 @@ Obj FuncPARI_POL_FACTOR_MOD_P(Obj self, Obj poly, Obj p)
     return 0;
 }
 
+Obj FuncPARI_GET_VERSION(Obj self)
+{
+    return PariGENToObj(pari_version());
+}
+
 Obj FuncPARI_INIT(Obj self, Obj stack, Obj primes)
 {
     if(!IS_INTOBJ(stack))
@@ -263,6 +268,7 @@ typedef Obj (* GVarFunc)(/*arguments*/);
 // Table of functions to export
 static StructGVarFunc GVarFuncs [] = {
     GVAR_FUNC(PARI_INIT, 2, "stack, primes"),
+    GVAR_FUNC(PARI_GET_VERSION, 0, ""),
     GVAR_FUNC(PARI_VECINT, 1, "list"),
     GVAR_FUNC(PARI_UNIPOLY, 1, "poly"),
     GVAR_FUNC(PARI_POL_GALOIS_GROUP, 1, "poly"),

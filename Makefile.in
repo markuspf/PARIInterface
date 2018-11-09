@@ -10,6 +10,9 @@ MODULE_NAME = PARIInterface
 
 SOURCES = src/PARIInterface.c
 
+TOP = $(shell pwd)
+
+
 ########################################################################
 # Do not edit below unless you know what you're doing
 ########################################################################
@@ -28,7 +31,7 @@ MKDIR_P = /bin/mkdir -p
 GAP = @GAPPATH@/gap
 GAC = @GAPPATH@/gac
 
-all: $(GAPINSTALLIB)
+all: pari $(GAPINSTALLIB)
 .PHONY: all
 
 ########################################################################
@@ -77,17 +80,17 @@ DEPFLAGS = -MQ "$@" -MMD -MP -MF $(@D)/$(*F).d
 
 # build rule for C code
 gen/%.lo: %.c
-	@$(QUIET_GAC)$(GAC) -d -p "$(DEPFLAGS)" -c $< -o $@
+	@$(QUIET_GAC)$(GAC) -d -p "$(DEPFLAGS)" -p "$(PARI_CPPFLAGS)" -c $< -o $@
 
 # build rule for C++ code
 gen/%.lo: %.cc
-	@$(QUIET_GAC)$(GAC) -d -p "$(DEPFLAGS)" -c $< -o $@
+	@$(QUIET_GAC)$(GAC) -d -p "$(DEPFLAGS)" -p "$(PARI_CPPFLAGS)" -c $< -o $@
 
 # build rule for linking all object files together into a kernel extension
 # TODO: detect pari lib and header files
 $(GAPINSTALLIB): $(OBJS)
 	@$(MKDIR_P) $(BINARCHDIR)
-	@$(QUIET_GAC)$(GAC) -d -p "$(DEPFLAGS)" $(OBJS) -L -lpari -o $@
+	@$(QUIET_GAC)$(GAC) -d -p "$(DEPFLAGS)" $(OBJS) -L "$(PARI_LDFLAGS)" -o $@
 
 clean:
 	rm -rf $(BINARCHDIR)
@@ -107,6 +110,36 @@ Makefile: configure Makefile.in
 	./configure "@GAPPATH@"
 
 .PHONY: default clean distclean doc check
+
+########################################################################
+# PARI
+########################################################################
+PARI_BUILDDIR := extern/build/pari
+PARI_PREFIX := extern/install/pari
+PARI_FILES := $(PARI_PREFIX)/lib/libpari.so
+PARI_DOWNLOAD = https://pari.math.u-bordeaux.fr/pub/pari/unix/pari-2.11.0.tar.gz
+WGET = wget -N
+PARI_CPPFLAGS = -I $(PARI_PREFIX)/include
+PARI_LDFLAGS = -R $(TOP)/$(PARI_PREFIX)/lib -L$(PARI_PREFIX)/lib -lpari
+
+########################################################################
+#
+# We support getting a recent version of PARI and building it
+# as part of the package
+#
+pari: $(PARI_FILES)
+$(PARI_FILES):
+	@( $(MKDIR_P) $(PARI_BUILDDIR) ; \
+           cd $(PARI_BUILDDIR) ; \
+	   $(WGET) $(PARI_DOWNLOAD) ; \
+	   tar xvzf pari-2.11.0.tar.gz ; \
+	   cd pari-2.11.0 ; \
+	   ./Configure --prefix=$(TOP)/$(PARI_PREFIX) --graphic=none ; \
+	   make install )
+
+pariclean:
+	rm -rf $(PARI_PREFIX)
+.PHONY: pariclean
 
 ########################################################################
 # Makefile debugging trick:
