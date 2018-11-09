@@ -116,13 +116,44 @@ static Obj PariVecSmallToList(GEN v)
     return res;
 }
 
+static Obj PariIntToIntObj(GEN v)
+{
+    Obj obj;
+    int i;
+    const long size = signe(v) * (lgefint (v) - 2);
+
+    if (typ (x) != t_INT)
+        ErrorQuit("v has to be a PARI t_INT", 0L, 0L);
+
+    return MakeObjInt(int_LSW(v));
+    /* cf MakeObjInt:
+    if (size==0)
+        obj = INTOBJ_INT(0);
+    else if (size == 1)
+        obj = ObjInt_UInt(*int_W(v, 1));
+    else if (size == -1)
+        obj = ObjInt_UIntInv(*int_W(v, 1));
+    else {
+        UInt tnum = (size > 0 ? T_INTPOS : T_INTNEG);
+        if (size < 0) size = -size;
+        obj = NewBag(tnum, size * sizeof(mp_limb_t));
+        for (i = 0; i < size; i++)
+            ADDR_INT(obj)[i] = *int_W (x, i);
+
+        obj = GMP_NORMALIZE(obj);
+        obj = GMP_REDUCE(obj);
+    }
+    return obj;
+    */
+}
+
 // Main dispatch
 static Obj PariGENToObj(GEN v)
 {
     Obj res;
     switch(typ(v)) {
     case t_INT:
-        return INTOBJ_INT(itos(v));
+        return PariIntToIntObj(v);
         break;
     case t_VEC:
         return PariVecToList(v);
@@ -131,7 +162,7 @@ static Obj PariGENToObj(GEN v)
         return PariVecSmallToList(v);
         break;
     case t_STR:
-        return NEW_CSTRING(GSTR(v));
+        return MakeString(GSTR(v));
         break;
     case t_INTMOD:
     case t_FRAC:
