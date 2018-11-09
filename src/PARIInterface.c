@@ -223,12 +223,11 @@ Obj FuncPARI_UNIPOLY(Obj self, Obj poly)
 Obj FuncPARI_POL_GALOIS_GROUP(Obj self, Obj poly)
 {
     GEN v, w;
-    v = PariGENUniPoly(poly);
-    output(v);
-    w = polgalois(v, DEFAULTPREC);
-    output(w);
 
-    return INTOBJ_INT(0);
+    v = PariGENUniPoly(poly);
+    w = polgalois(v, DEFAULTPREC);
+
+    return PariGENToObj(w);
 }
 
 Obj FuncPARI_POL_FACTOR_MOD_P(Obj self, Obj poly, Obj p)
