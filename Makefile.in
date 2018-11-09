@@ -10,6 +10,7 @@ MODULE_NAME = PARIInterface
 
 SOURCES = src/PARIInterface.c
 
+BUILD_PARI=yes
 TOP = $(shell pwd)
 EXTRA_CPPFLAGS =
 EXTRA_LDFLAGS =
