@@ -15,69 +15,18 @@
 
 static Obj PARI_GEN_Type; // Imported from GAP
 
-// TODO:?
+// This is a bag that wraps a PARI value, in case we want to hold on to
+// it GAP-side.
+// Note that we must not hold on to values on the PARI stack as they might
+// disappear due to garbage collection
 static Obj NewPARIGEN()
 {
-    Obj gen;
+    Obj o;
 
-    gen = NewBag(T_DATOBJ, PARI_DAT_WORDS);
-    PARI_DAT_TYPE(gen) = PARI_T_GEN;
-}
+    o = NewBag(T_DATOBJ, PARI_DAT_WORDS);
+    PARI_DAT_TYPE(o) = PARI_T_GEN;
 
-//
-// Functions converting between pari and mpz
-//
-// These are borrowed from the paritwine library
-// and used to convert between PARI integers and GAP integers
-//
-static void mpz_set_GEN (mpz_ptr z, GEN x)
-   /* Sets z to x, which needs to be of type t_INT. */
-{
-   const long lx = lgefint (x) - 2;
-   const long sign = signe (x);
-   int i;
-
-   assert (sizeof (long) == sizeof (mp_limb_t));
-
-   if (typ (x) != t_INT)
-      pari_err_TYPE ("mpz_set_GEN", x);
-
-   if (sign == 0)
-      mpz_set_ui (z, 0);
-   else {
-      mpz_realloc2 (z, lx * BITS_IN_LONG);
-      z->_mp_size = sign * lx;
-      for (i = 0; i < lx; i++)
-         (z->_mp_d) [i] = *int_W (x, i);
-   }
-}
-
-static GEN mpz_get_GEN (mpz_srcptr z)
-   /* Returns the GEN of type t_INT corresponding to z. */
-{
-   const long lz = z->_mp_size;
-   const long lx = labs (lz);
-   const long lx2 = lx + 2;
-   int i;
-   GEN x = cgeti (lx2);
-
-   assert (sizeof (long) == sizeof (mp_limb_t));
-
-   x [1] = evalsigne ((lz > 0 ? 1 : (lz < 0 ? -1 : 0))) | evallgefint (lx2);
-   for (i = 0; i < lx; i++)
-      *int_W (x, i) = (z->_mp_d) [i];
-
-   return x;
-}
-
-/*
- *
- */
-Obj FuncPARIGEN_INT(Obj self, Obj intobj)
-{
-    if(!IS_INTOBJ(intobj))
-        ErrorQuit("<intobj> has to be an integer object", 0L, 0L);
-
+    return o;
 }
 
 //
@@ -97,7 +46,7 @@ static Obj PariVecToList(GEN v)
     SET_LEN_PLIST(res, len - 1);
 
     for(Int i = 1; i < len; i++) {
-        SET_ELM_PLIST(res, i, PariGENToObj(v[i]));
+        SET_ELM_PLIST(res, i, PariGENToObj(gel(v, i)));
         CHANGED_BAG(res);
     }
     return res;
@@ -110,41 +59,26 @@ static Obj PariVecSmallToList(GEN v)
     SET_LEN_PLIST(res, len - 1);
 
     for(Int i = 1; i < len; i++) {
-        SET_ELM_PLIST(res, i, INTOBJ_INT(v[i]));
+        SET_ELM_PLIST(res, i, INTOBJ_INT(itos(gel(v,i))));
         CHANGED_BAG(res);
     }
     return res;
 }
 
+/*
+ * According to Bill Allombert PARI has support for
+ * both MSW and LSW storage of ints,
+ *  We only support LSW. If you want MSW, submit a patch
+ */
 static Obj PariIntToIntObj(GEN v)
 {
-    Obj obj;
-    int i;
-    const long size = signe(v) * (lgefint (v) - 2);
+    long size;
 
-    if (typ (x) != t_INT)
+    if (typ (v) != t_INT)
         ErrorQuit("v has to be a PARI t_INT", 0L, 0L);
 
-    return MakeObjInt(int_LSW(v));
-    /* cf MakeObjInt:
-    if (size==0)
-        obj = INTOBJ_INT(0);
-    else if (size == 1)
-        obj = ObjInt_UInt(*int_W(v, 1));
-    else if (size == -1)
-        obj = ObjInt_UIntInv(*int_W(v, 1));
-    else {
-        UInt tnum = (size > 0 ? T_INTPOS : T_INTNEG);
-        if (size < 0) size = -size;
-        obj = NewBag(tnum, size * sizeof(mp_limb_t));
-        for (i = 0; i < size; i++)
-            ADDR_INT(obj)[i] = *int_W (x, i);
-
-        obj = GMP_NORMALIZE(obj);
-        obj = GMP_REDUCE(obj);
-    }
-    return obj;
-    */
+    size = signe(v) * (lgefint (v) - 2);
+    return MakeObjInt(int_LSW(v), size);
 }
 
 // Main dispatch
@@ -197,9 +131,9 @@ static GEN ListToPariVec(Obj list)
     for(UInt i = 1; i <= len; i++ ) {
         Obj elt = ELM_LIST(list, i);
         if(IS_INTOBJ(elt)) {
-            v[i] = stoi(Int8_ObjInt(elt));
+            gel(v, i) = stoi(Int8_ObjInt(elt));
         } else if(IS_LIST(elt)) {
-            v[i] = ListToPariVec(elt);
+            gel(v, i) = ListToPariVec(elt);
         } else {
             ErrorQuit("encountered unhandled object", 0L, 0L);
         }
@@ -207,8 +141,30 @@ static GEN ListToPariVec(Obj list)
     return v;
 }
 
+static GEN IntToPariGEN(Obj o)
+{
+    Int i, size, sign;
+    GEN r;
+
+    if (IS_INTOBJ(o)) {
+        // Immediate integers can be converted using
+        // stoi
+        r = stoi(UInt8_ObjInt(o));
+    } else { // Large integer
+        size = SIZE_INT(o);
+        sign = IS_POS_INT(o) ? 1 : -1;
+
+        r = cgeti(size + 2);
+        r[1] = size * sign;
+        for (i = 0; i < size; i++)
+            *int_W(r, i) = ADDR_INT(o)[i];
+    }
+    return r;
+}
+
 static GEN ObjToPariGEN(Obj obj)
 {
+    // Replace tnum switch by IS_xxx macros?
     switch(TNUM_OBJ(obj)) {
     case T_INT:
         break;
@@ -247,7 +203,7 @@ GEN PariGENUniPoly(Obj poly)
         v = cgetg(3 + deg, t_POL);
         for(UInt i = 2; i < 2 + len; i++) {
             Obj elt = ELM_LIST(poly, i - 1);
-            v[i] = stoi(Int8_ObjInt(elt));
+            gel(v, i) = stoi(Int8_ObjInt(elt));
         }
     }
     v[1] = evalsigne(0);
