@@ -86,29 +86,34 @@ static Obj PariGENToObj(GEN v)
 {
     Obj res;
     switch(typ(v)) {
-    case t_INT:
+    case t_INT: // Integer
         return PariIntToIntObj(v);
         break;
-    case t_VEC:
+    case t_COL: // Column Vector
+    case t_VEC: // Row Vector
         return PariVecToList(v);
         break;
-    case t_VECSMALL:
+    case t_VECSMALL: // Vector of small integers
         return PariVecSmallToList(v);
         break;
-    case t_STR:
+    case t_STR: // String
         return MakeString(GSTR(v));
         break;
-    case t_INTMOD:
-    case t_FRAC:
-    case t_FFELT:
-    case t_PADIC:
-    case t_POLMOD:
-    case t_POL:
-    case t_SER:
-    case t_RFRAC:
-    case t_COL:
-    case t_MAT:
-    case t_ERROR:
+    case t_INTMOD: // Int mod Modulus
+	break;
+    case t_FRAC: // Fraction
+	res = NewBag( T_RAT, 2 * sizeof(Obj) );
+	SET_NUM_RAT(res, PariGENToObj(gel(v, 1)));
+	SET_DEN_RAT(res, PariGENToObj(gel(v, 2)));
+	break;
+    case t_FFELT: // Finite field element
+    case t_POLMOD: // Polynomial mod modulus
+    case t_POL: // Polynomial
+    case t_SER: // Power series
+    case t_RFRAC: // Rational function
+    case t_MAT: // Matrix
+    case t_PADIC: // p-adic numbers
+    case t_QUAD: // quadratic numbers
     default:
         // TODO: Find names for the types
         ErrorQuit("not a supported type", 0L, 0L);
