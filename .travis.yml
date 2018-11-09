@@ -13,17 +13,27 @@ addons:
     - libreadline-dev:i386
     - gcc-multilib
     - g++-multilib
-    - libpari-dev
-    - libpari-dev:i386
 
 matrix:
   include:
     - env: CFLAGS="-O2" CC=clang CXX=clang++
       compiler: clang
+      addons:
+        apt_packages:
+          - libpari-dev
     - env: CFLAGS="-O2"
       compiler: gcc
-    - env: BUILD_PARI="yes"
+      addons:
+        apt_packages:
+          - libpari-dev
     - env: ABI=32
+      addons:
+        apt_packages:
+          - libgmp-dev:i386
+          - gcc-multilib
+          - g++-multilib
+          - libpari-dev:i386
+    - env: BUILD_PARI="yes"
     - env: ABI=32 BUILD_PARI="yes"
 
 branches:

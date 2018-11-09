@@ -13,6 +13,7 @@ SOURCES = src/PARIInterface.c
 TOP = $(shell pwd)
 EXTRA_CPPFLAGS =
 EXTRA_LDFLAGS =
+EXTERN_FILES =
 
 ########################################################################
 # Do not edit below unless you know what you're doing
@@ -32,7 +33,7 @@ MKDIR_P = /bin/mkdir -p
 GAP = @GAPPATH@/gap
 GAC = @GAPPATH@/gac
 
-all: pari $(GAPINSTALLIB)
+all: $(GAPINSTALLIB)
 .PHONY: all
 
 ########################################################################
@@ -116,16 +117,14 @@ Makefile: configure Makefile.in
 # PARI
 ########################################################################
 ifeq ($(BUILD_PARI),yes)
-PARI_BUILDDIR := extern/build/pari
-PARI_PREFIX := extern/install/pari
+PARI_PREFIX := extern/install
 PARI_FILES := $(PARI_PREFIX)/lib/libpari.so
-PARI_DOWNLOAD = https://pari.math.u-bordeaux.fr/pub/pari/unix/pari-2.11.0.tar.gz
-WGET = wget -N
 PARI_CPPFLAGS = -I $(PARI_PREFIX)/include
 PARI_LDFLAGS = -R $(TOP)/$(PARI_PREFIX)/lib -L$(PARI_PREFIX)/lib -lpari
 
 EXTRA_CPPFLAGS += $(PARI_CPPFLAGS)
 EXTRA_LDFLAGS += $(PARI_LDFLAGS) 
+EXTERN_FILES += $(PARI_FILES)
 
 ########################################################################
 #
@@ -134,13 +133,7 @@ EXTRA_LDFLAGS += $(PARI_LDFLAGS)
 #
 pari: $(PARI_FILES)
 $(PARI_FILES):
-	@( $(MKDIR_P) $(PARI_BUILDDIR) ; \
-           cd $(PARI_BUILDDIR) ; \
-	   $(WGET) $(PARI_DOWNLOAD) ; \
-	   tar xvzf pari-2.11.0.tar.gz > /dev/null ; \
-	   cd pari-2.11.0 ; \
-	   ./Configure --prefix=$(TOP)/$(PARI_PREFIX) --graphic=none ; \
-	   make install )
+	scripts/build_pari.sh $(GAPPATH)
 
 pariclean:
 	rm -rf $(PARI_PREFIX)
@@ -150,10 +143,14 @@ else
 
 EXTRA_LDFLAGS += -lpari
 
-pari:	
+pari:
 	echo "Using system PARI, nothing to be done"
 
 endif
+
+$(OBJS): $(EXTERN_FILES)
+$(GAPINSTALLIB): $(EXTERN_FILES)
+
 ########################################################################
 # Makefile debugging trick:
 # call print-VARIABLE to see the runtime value of any variable
