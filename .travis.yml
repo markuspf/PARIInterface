@@ -14,6 +14,7 @@ addons:
     - gcc-multilib
     - g++-multilib
     - libpari-dev
+    - libpari-dev:i386
 
 matrix:
   include:
