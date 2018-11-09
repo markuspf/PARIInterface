@@ -10,7 +10,6 @@ MODULE_NAME = PARIInterface
 
 SOURCES = src/PARIInterface.c
 
-BUILD_PARI=yes
 TOP = $(shell pwd)
 EXTRA_CPPFLAGS =
 EXTRA_LDFLAGS =
@@ -138,7 +137,7 @@ $(PARI_FILES):
 	@( $(MKDIR_P) $(PARI_BUILDDIR) ; \
            cd $(PARI_BUILDDIR) ; \
 	   $(WGET) $(PARI_DOWNLOAD) ; \
-	   tar xvzf pari-2.11.0.tar.gz ; \
+	   tar xvzf pari-2.11.0.tar.gz > /dev/null ; \
 	   cd pari-2.11.0 ; \
 	   ./Configure --prefix=$(TOP)/$(PARI_PREFIX) --graphic=none ; \
 	   make install )
