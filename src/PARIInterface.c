@@ -112,11 +112,13 @@ static Obj PariGENToObj(GEN v)
     case t_SER: // Power series
     case t_RFRAC: // Rational function
     case t_MAT: // Matrix
+        return PariVecToList(v);
+        break; 
     case t_PADIC: // p-adic numbers
     case t_QUAD: // quadratic numbers
     default:
         // TODO: Find names for the types
-        ErrorQuit("not a supported type", 0L, 0L);
+        ErrorQuit("PariGENToObj: not a supported type %i", typ(v), 0L);
         break;
     }
     return res;
@@ -193,18 +195,10 @@ static GEN PariGENUniPoly(Obj poly)
 
 static GEN ObjToPariGEN(Obj obj)
 {
-    // Replace tnum switch by IS_xxx macros?
-    switch(TNUM_OBJ(obj)) {
-    case T_INT:
-        break;
-    case T_FFE:
-        break;
-    case T_PLIST:
-        break;
-    default:
-        ErrorQuit("not a supported type", 0L, 0L);
-        break;
-    }
+    if (IS_INT(obj))
+        return IntToPariGEN(obj);
+    else
+        ErrorQuit("ObjToPariGEN: not a supported type: %s", TNAM_OBJ(obj), 0L);
 }
 
 
@@ -249,6 +243,26 @@ Obj FuncPARI_POL_FACTOR_MOD_P(Obj self, Obj poly, Obj p)
     return 0;
 }
 
+Obj FuncPARI_GEN_ROUNDTRIP(Obj self, Obj x)
+{
+    return PariGENToObj(ObjToPariGEN(x));
+}
+
+Obj FuncPARI_MULT(Obj self, Obj x, Obj y)
+{
+    GEN a,b;
+
+    a = ObjToPariGEN(x);
+    b = ObjToPariGEN(y);
+
+    return PariGENToObj(mpmul(a,b));
+}
+
+Obj FuncPARI_FACTOR_INT(Obj self, Obj x)
+{
+    return PariGENToObj(factorint(ObjToPariGEN(x), 0));
+}
+
 Obj FuncPARI_GET_VERSION(Obj self)
 {
     return PariGENToObj(pari_version());
@@ -280,11 +294,14 @@ static StructGVarFunc GVarFuncs [] = {
     GVAR_FUNC(PARI_INIT, 2, "stack, primes"),
     GVAR_FUNC(PARI_CLOSE, 0, ""),
     GVAR_FUNC(PARI_GET_VERSION, 0, ""),
+    GVAR_FUNC(PARI_GEN_ROUNDTRIP, 1, "x"),
+    GVAR_FUNC(PARI_MULT, 2, "a, b"),
     GVAR_FUNC(PARI_VECINT, 1, "list"),
     GVAR_FUNC(PARI_UNIPOLY, 1, "poly"),
     GVAR_FUNC(PARI_POL_GALOIS_GROUP, 1, "poly"),
     GVAR_FUNC(PARI_POL_FACTOR_MOD_P, 2, "poly, p"),
-	{ 0 } /* Finish with an empty entry */
+    GVAR_FUNC(PARI_FACTOR_INT, 1, "x"),
+    { 0 } /* Finish with an empty entry */
 };
 
 /******************************************************************************
