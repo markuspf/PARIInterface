@@ -9,36 +9,68 @@
 
 #define PARI_T_GEN 0          // Generic PARI object
 
-#define PARI_DAT_WORDS 4
-#define PARI_DAT_TYPE(obj)  ADDR_OBJ(obj)[0]
+#define PARI_DAT_WORDS (sizeof(Obj) * 4)
+#define PARI_DAT_TYPE(obj)         ((Int)(CONST_ADDR_OBJ(obj)[1]))
+#define SET_PARI_DAT_TYPE(obj, t)  (ADDR_OBJ(obj)[1] = (Obj)(t))
+#define PARI_DAT_GEN(obj)          ((GEN)(CONST_ADDR_OBJ(obj)[2]))
+#define SET_PARI_DAT_GEN(obj, g)   (ADDR_OBJ(obj)[2] = (Obj)(g))
 
 
-static Obj PARI_GEN_Type; // Imported from GAP
+static Obj PARI_GEN_Type;    // Imported from GAP
+static Obj PARI_GEN_REFLIST; // list of references to PARI Objects
+                             // that are still used by GAP
 
-// This is a bag that wraps a PARI value, in case we want to hold on to
-// it GAP-side.
-// Note that we must not hold on to values on the PARI stack as they might
-// disappear due to garbage collection
-static Obj NewPARIGEN()
-{
-    Obj o;
 
-    o = NewBag(T_DATOBJ, PARI_DAT_WORDS);
-    PARI_DAT_TYPE(o) = PARI_T_GEN;
-
-    return o;
-}
-
-//
 // Conversions from PARI GEN to corresponding GAP Obj
-//
-// Currently supports t_INT, t_VEC, t_VECSMALL, t_STR.
-//
 static Obj PariGENToObj(GEN v);
 static Obj PariVecToList(GEN v);
 static Obj PariVecSmallToList(GEN v);
 static Obj PariVecToList(GEN v);
 
+// Conversions from GAP Object to PARI GEN
+static GEN ObjToPariGEN(Obj obj);
+static GEN ListToPariVec(Obj list);
+static GEN IntToPariGEN(Obj o);
+
+// This is a bag that wraps a PARI value, in case we want to hold on to
+// it GAP-side.
+// we should create reference counting for pari objects
+// because we have full control over garbage collection
+// We should never get unreachable loops in the dependency graph because
+// never stick GAP objects into PARI objects
+static Obj NewPARIGEN(GEN data)
+{
+    Obj o;
+
+    o = NewBag(T_DATOBJ, PARI_DAT_WORDS);
+    SetTypeDatObj(o, PARI_GEN_Type);
+    SET_PARI_DAT_TYPE(o, PARI_T_GEN);
+    SET_PARI_DAT_GEN(o, data);
+    return o;
+}
+
+static Obj FuncPARI_GEN_GET_TYPE(Obj self, Obj obj)
+{
+    if((TNUM_OBJ(obj) != T_DATOBJ) || (PARI_DAT_TYPE(obj) != PARI_T_GEN))
+        ErrorQuit("obj has to be a DATOBJ of type PARI_T_GEN", 0L, 0L);
+    return INTOBJ_INT(typ(PARI_DAT_GEN(obj)));
+}
+
+static Obj FuncPARI_GEN_GET_DATA(Obj self, Obj obj)
+{
+    if((TNUM_OBJ(obj) != T_DATOBJ) || (PARI_DAT_TYPE(obj) != PARI_T_GEN))
+        ErrorQuit("obj has to be a DATOBJ of type PARI_T_GEN", 0L, 0L);
+    return PariGENToObj(PARI_DAT_GEN(obj));
+}
+
+static Obj FuncINT_TO_PARI_GEN(Obj self, Obj obj)
+{
+    return NewPARIGEN(IntToPariGEN(obj));
+}
+
+//
+// Conversions from PARI GEN to corresponding GAP Obj
+//
 static Obj PariVecToList(GEN v)
 {
     Int len = lg(v);
@@ -81,41 +113,61 @@ static Obj PariIntToIntObj(GEN v)
     return MakeObjInt(int_LSW(v), size);
 }
 
+static Obj PariFracToRatObj(GEN v)
+{
+    Obj res;
+
+    res = NewBag(T_RAT, 2 * sizeof(Obj));
+    SET_NUM_RAT(res, PariGENToObj(gel(v, 1)));
+    SET_DEN_RAT(res, PariGENToObj(gel(v, 2)));
+
+    return res;
+}
+
+static Obj PariPolToList(GEN v)
+{
+    Int len = lg(v);
+    Obj res = NEW_PLIST(T_PLIST, len - 3);
+    SET_LEN_PLIST(res, len - 2);
+    for(Int i = 2; i<len; i++) {
+        SET_ELM_PLIST(res, i-1, PariGENToObj(gel(v,i)));
+        CHANGED_BAG(res);
+    }
+    return res;
+}
+
 // Main dispatch
+// When there's no immediately obvious object to convert to
+// We currently convert to a list of subobjects
+// Some of this should probably be done on the GAP Level
 static Obj PariGENToObj(GEN v)
 {
     Obj res;
-    switch(typ(v)) {
-    case t_INT: // Integer
+    switch (typ(v)) {
+    case t_INT:    // Integer
         return PariIntToIntObj(v);
-        break;
-    case t_COL: // Column Vector
-    case t_VEC: // Row Vector
+    case t_COL:    // Column Vector
+    case t_VEC:    // Row Vector
         return PariVecToList(v);
-        break;
-    case t_VECSMALL: // Vector of small integers
+    case t_VECSMALL:    // Vector of small integers
         return PariVecSmallToList(v);
-        break;
-    case t_STR: // String
+    case t_STR:    // String
         return MakeString(GSTR(v));
-        break;
-    case t_INTMOD: // Int mod Modulus
-	break;
-    case t_FRAC: // Fraction
-	res = NewBag( T_RAT, 2 * sizeof(Obj) );
-	SET_NUM_RAT(res, PariGENToObj(gel(v, 1)));
-	SET_DEN_RAT(res, PariGENToObj(gel(v, 2)));
-	break;
-    case t_FFELT: // Finite field element
-    case t_POLMOD: // Polynomial mod modulus
-    case t_POL: // Polynomial
-    case t_SER: // Power series
-    case t_RFRAC: // Rational function
-    case t_MAT: // Matrix
+    case t_INTMOD:    // Int mod Modulus
         return PariVecToList(v);
-        break; 
-    case t_PADIC: // p-adic numbers
-    case t_QUAD: // quadratic numbers
+    case t_FRAC:    // Fraction
+        return PariFracToRatObj(v);
+    case t_POLMOD:    // Polynomial mod modulus
+        return PariVecToList(v);
+    case t_POL:       // Polynomial
+        return PariPolToList(v);
+    case t_MAT:       // Matrix
+        return PariVecToList(v);
+    case t_FFELT:     // Finite field element
+    case t_SER:       // Power series
+    case t_RFRAC:     // Rational function
+    case t_PADIC:    // p-adic numbers
+    case t_QUAD:     // quadratic numbers
     default:
         // TODO: Find names for the types
         ErrorQuit("PariGENToObj: not a supported type %i", typ(v), 0L);
@@ -127,23 +179,16 @@ static Obj PariGENToObj(GEN v)
 //
 // Converts a GAP Obj to a PARI GEN (if possible)
 //
+static GEN ObjToPariGEN(Obj obj);
 static GEN ListToPariVec(Obj list);
 
 static GEN ListToPariVec(Obj list)
 {
-    // TODO: If we want this to be strictly correct, we need to use the
-    //       traversal code...
     UInt len = LEN_LIST(list);
     GEN v = cgetg(len + 1, t_VEC);
     for(UInt i = 1; i <= len; i++ ) {
         Obj elt = ELM_LIST(list, i);
-        if(IS_INTOBJ(elt)) {
-            gel(v, i) = stoi(Int8_ObjInt(elt));
-        } else if(IS_LIST(elt)) {
-            gel(v, i) = ListToPariVec(elt);
-        } else {
-            ErrorQuit("encountered unhandled object", 0L, 0L);
-        }
+        gel(v, i) = ObjToPariGEN(elt);
     }
     return v;
 }
@@ -169,7 +214,7 @@ static GEN IntToPariGEN(Obj o)
     return r;
 }
 
-static GEN PariGENUniPoly(Obj poly)
+static GEN CoeffListToPariGEN(Obj poly)
 {
     UInt len;
     UInt deg;
@@ -213,9 +258,9 @@ Obj FuncPARI_VECINT(Obj self, Obj list)
 
 Obj FuncPARI_UNIPOLY(Obj self, Obj poly)
 {
-    GEN v = PariGENUniPoly(poly);
+    GEN v = CoeffListToPariGEN(poly);
 
-    return 0;
+    return NewPARIGEN(v);
 }
 
 Obj FuncPARI_POL_GALOIS_GROUP(Obj self, Obj poly)
@@ -236,7 +281,7 @@ Obj FuncPARI_POL_FACTOR_MOD_P(Obj self, Obj poly, Obj p)
     x = stoi(Int8_ObjInt(p));
     w = FpX_factor(v, x);
 
-    return 0;
+    return PariGENToObj(w);
 }
 
 Obj FuncPARI_GEN_ROUNDTRIP(Obj self, Obj x)
@@ -259,9 +304,9 @@ Obj FuncPARI_FACTOR_INT(Obj self, Obj x)
     GEN y, f;
     Obj r;
 
-    y = ObjToPariGEN(x); 
+    y = ObjToPariGEN(x);
     f = factorint(y, 0);
-    r = PariGENToObj(f); 
+    r = PariGENToObj(f);
 
     return r;
 }
@@ -304,6 +349,9 @@ static StructGVarFunc GVarFuncs [] = {
     GVAR_FUNC(PARI_POL_GALOIS_GROUP, 1, "poly"),
     GVAR_FUNC(PARI_POL_FACTOR_MOD_P, 2, "poly, p"),
     GVAR_FUNC(PARI_FACTOR_INT, 1, "x"),
+    GVAR_FUNC(PARI_GEN_GET_TYPE, 1, "o"),
+    GVAR_FUNC(PARI_GEN_GET_DATA, 1, "o"),
+    GVAR_FUNC(INT_TO_PARI_GEN, 1, "i"),
     { 0 } /* Finish with an empty entry */
 };
 
@@ -316,6 +364,7 @@ static Int InitKernel( StructInitInfo *module )
     InitHdlrFuncsFromTable( GVarFuncs );
 
     ImportGVarFromLibrary("PARI_GEN_Type", &PARI_GEN_Type);
+    ImportGVarFromLibrary("PARI_GEN_REFLIST", &PARI_GEN_REFLIST);
 
     /* return success                                                      */
     return 0;
