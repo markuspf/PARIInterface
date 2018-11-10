@@ -162,9 +162,9 @@ static GEN IntToPariGEN(Obj o)
         sign = IS_POS_INT(o) ? 1 : -1;
 
         r = cgeti(size + 2);
-        r[1] = size * sign;
-        for (i = 0; i < size; i++)
-            *int_W(r, i) = ADDR_INT(o)[i];
+        // TODO: This looks a bit mysterious
+        r[1] = evalsigne(sign) | evallgefint(size + 2);
+        memcpy(int_W(r,0), ADDR_INT(o), size * sizeof(mp_limb_t));
     }
     return r;
 }
@@ -214,7 +214,6 @@ Obj FuncPARI_VECINT(Obj self, Obj list)
 Obj FuncPARI_UNIPOLY(Obj self, Obj poly)
 {
     GEN v = PariGENUniPoly(poly);
-    output(v);
 
     return 0;
 }
@@ -234,11 +233,8 @@ Obj FuncPARI_POL_FACTOR_MOD_P(Obj self, Obj poly, Obj p)
     GEN v, w, x;
 
     v = PariGENUniPoly(poly);
-    output(v);
     x = stoi(Int8_ObjInt(p));
-    output(x);
     w = FpX_factor(v, x);
-    output(w);
 
     return 0;
 }
@@ -260,7 +256,14 @@ Obj FuncPARI_MULT(Obj self, Obj x, Obj y)
 
 Obj FuncPARI_FACTOR_INT(Obj self, Obj x)
 {
-    return PariGENToObj(factorint(ObjToPariGEN(x), 0));
+    GEN y, f;
+    Obj r;
+
+    y = ObjToPariGEN(x); 
+    f = factorint(y, 0);
+    r = PariGENToObj(f); 
+
+    return r;
 }
 
 Obj FuncPARI_GET_VERSION(Obj self)
