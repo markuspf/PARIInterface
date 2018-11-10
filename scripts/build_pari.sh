@@ -33,13 +33,17 @@ PARI_PREFIX="${PARI_BUILDDIR}/install"
 mkdir -p $PARI_BUILDDIR
 cd $PARI_BUILDDIR
 
-if [[ $USE_GIT = yes ]] ; then
-    git clone http://pari.math.u-bordeaux.fr/git/pari.git
-    git checkout $PARI_VERSION
+if [[ ! -e pari ]] ; then 
+    if [[ $USE_GIT = yes ]] ; then
+        git clone http://pari.math.u-bordeaux.fr/git/pari.git
+        git checkout $PARI_VERSION
+    else
+        wget -N $PARI_DOWNLOAD_URL
+        tar xvzf ${PARI_VERSION}.tar.gz > /dev/null
+        mv ${PARI_VERSION} pari
+    fi
 else
-    wget -N $PARI_DOWNLOAD_URL
-    tar xvzf ${PARI_VERSION}.tar.gz > /dev/null
-    mv ${PARI_VERSION} pari
+    echo "pari directory exists, reusing it"
 fi
 
 cd pari
