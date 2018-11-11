@@ -8,7 +8,7 @@
 #
 MODULE_NAME = PARIInterface
 
-SOURCES = src/PARIInterface.c src/pariglue.c
+SOURCES = src/PARIInterface.c
 
 TOP = $(shell pwd)
 EXTRA_CPPFLAGS =
