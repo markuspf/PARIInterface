@@ -6,6 +6,7 @@
 #include "src/compiled.h"          /* GAP headers */
 
 #include <gmp.h>                   /* mp_limb_t :/ */
+#include <dlfcn.h>
 
 #include "PARIInterface.h"
 
@@ -355,6 +356,175 @@ static Obj FuncPARI_gcdii(Obj self, Obj x, Obj y)
     return NewPARIGEN(gcdii(x_, y_));
 }
 
+static Obj FuncPARI_CALL0(Obj self, Obj name)
+{
+    GEN (*func)() = 0;
+    func = dlsym(RTLD_LOCAL, CHARS_STRING(name));
+    if(!func)
+        ErrorQuit("function not found", 0L, 0L);
+    return NewPARIGEN((*func)());
+}
+
+static Obj FuncPARI_CALL1(Obj self, Obj name, Obj a1)
+{
+    GEN (*func)(GEN) = 0;
+    GEN g1 = PARI_DAT_GEN(a1);
+    func = dlsym(RTLD_LOCAL, CHARS_STRING(name));
+    if(!func)
+        ErrorQuit("function not found", 0L, 0L);
+    return NewPARIGEN((*func)(g1));
+}
+
+static Obj FuncPARI_CALL2(Obj self, Obj name, Obj a1, Obj a2)
+{
+    GEN (*func)(GEN,GEN) = 0;
+    GEN g1 = PARI_DAT_GEN(a1);
+    GEN g2 = PARI_DAT_GEN(a2);
+    func = dlsym(RTLD_LOCAL, CHARS_STRING(name));
+    if(!func)
+       ErrorQuit("function not found", 0L, 0L);
+    return NewPARIGEN((*func)(g1,g2));
+}
+
+static Obj FuncPARI_CALL3(Obj self, Obj name, Obj a1, Obj a2, Obj a3)
+{
+    GEN (*func)(GEN,GEN,GEN) = 0;
+    GEN g1 = PARI_DAT_GEN(a1);
+    GEN g2 = PARI_DAT_GEN(a2);
+    GEN g3 = PARI_DAT_GEN(a3);
+    func = dlsym(RTLD_LOCAL, CHARS_STRING(name));
+    if(!func)
+        ErrorQuit("function not found", 0L, 0L);
+    return NewPARIGEN((*func)(g1,g2,g3));
+}
+
+static Obj FuncPARI_CALL4(Obj self, Obj name, Obj a1, Obj a2, Obj a3, Obj a4)
+{
+    GEN (*func)(GEN,GEN,GEN,GEN) = 0;
+    GEN g1 = PARI_DAT_GEN(a1);
+    GEN g2 = PARI_DAT_GEN(a2);
+    GEN g3 = PARI_DAT_GEN(a3);
+    GEN g4 = PARI_DAT_GEN(a4);
+    func = dlsym(RTLD_LOCAL, CHARS_STRING(name));
+    if(!func)
+        ErrorQuit("function not found", 0L, 0L);
+    return NewPARIGEN((*func)(g1,g2,g3,g4));
+}
+
+static Obj FuncPARI_CALL5(Obj self, Obj name, Obj a1, Obj a2, Obj a3, Obj a4, Obj a5)
+{
+    GEN (*func)(GEN,GEN,GEN,GEN,GEN) = 0;
+    GEN g1 = PARI_DAT_GEN(a1);
+    GEN g2 = PARI_DAT_GEN(a2);
+    GEN g3 = PARI_DAT_GEN(a3);
+    GEN g4 = PARI_DAT_GEN(a4);
+    GEN g5 = PARI_DAT_GEN(a5);
+    func = dlsym(RTLD_LOCAL, CHARS_STRING(name));
+    if(!func)
+        ErrorQuit("function not found", 0L, 0L);
+    return NewPARIGEN((*func)(g1,g2,g3,g4,g5));
+}
+
+typedef struct {
+    FuncBag func;
+    void *symbol;
+} PariFuncBag;
+
+static inline PariFuncBag * PARI_FUNC(Obj func)
+{
+    return (PariFuncBag *)ADDR_OBJ(func);
+}
+
+static Obj PARI_FUNC_HANDLER0(Obj self)
+{
+    GEN (*func)() = PARI_FUNC(self)->symbol;
+    return NewPARIGEN((*func)());
+}
+
+static Obj PARI_FUNC_HANDLER1(Obj self, Obj a1)
+{
+    GEN (*func)(GEN) = PARI_FUNC(self)->symbol;
+    GEN g1 = PARI_DAT_GEN(a1);
+    return NewPARIGEN((*func)(g1));
+}
+
+static Obj PARI_FUNC_HANDLER2(Obj self, Obj a1, Obj a2)
+{
+    GEN (*func)(GEN,GEN) = PARI_FUNC(self)->symbol;
+    GEN g1 = PARI_DAT_GEN(a1);
+    GEN g2 = PARI_DAT_GEN(a2);
+    return NewPARIGEN((*func)(g1,g2));
+}
+
+static Obj PARI_FUNC_HANDLER3(Obj self, Obj a1, Obj a2, Obj a3)
+{
+    GEN (*func)(GEN,GEN,GEN) = PARI_FUNC(self)->symbol;
+    GEN g1 = PARI_DAT_GEN(a1);
+    GEN g2 = PARI_DAT_GEN(a2);
+    GEN g3 = PARI_DAT_GEN(a3);
+    return NewPARIGEN((*func)(g1,g2,g3));
+}
+
+static Obj PARI_FUNC_HANDLER4(Obj self, Obj a1, Obj a2, Obj a3, Obj a4)
+{
+    GEN (*func)(GEN,GEN,GEN,GEN) = PARI_FUNC(self)->symbol;
+    GEN g1 = PARI_DAT_GEN(a1);
+    GEN g2 = PARI_DAT_GEN(a2);
+    GEN g3 = PARI_DAT_GEN(a3);
+    GEN g4 = PARI_DAT_GEN(a4);
+    return NewPARIGEN((*func)(g1,g2,g3,g4));
+}
+
+static Obj PARI_FUNC_HANDLER5(Obj self, Obj a1, Obj a2, Obj a3, Obj a4, Obj a5)
+{
+    GEN (*func)(GEN,GEN,GEN,GEN,GEN) = PARI_FUNC(self)->symbol;
+    GEN g1 = PARI_DAT_GEN(a1);
+    GEN g2 = PARI_DAT_GEN(a2);
+    GEN g3 = PARI_DAT_GEN(a3);
+    GEN g4 = PARI_DAT_GEN(a4);
+    GEN g5 = PARI_DAT_GEN(a5);
+    return NewPARIGEN((*func)(g1,g2,g3,g4,g5));
+}
+
+static Obj FuncPARI_FUNC_WRAP(Obj self, Obj name, Obj args)
+{
+    Obj func;
+    Int narg;
+    Obj (*handler)();
+
+    narg = LEN_LIST(args);
+
+    switch (narg) {
+    case 0:
+        handler = PARI_FUNC_HANDLER0;
+        break;
+    case 1:
+        handler = PARI_FUNC_HANDLER1;
+        break;
+    case 2:
+        handler = PARI_FUNC_HANDLER2;
+        break;
+    case 3:
+        handler = PARI_FUNC_HANDLER3;
+        break;
+    case 4:
+        handler = PARI_FUNC_HANDLER4;
+        break;
+    case 5:
+        handler = PARI_FUNC_HANDLER5;
+        break;
+    default:
+        ErrorQuit("cannot handle functions with %i arguments", narg, 0L);
+        break;
+    }
+    func = NewFunctionT(T_FUNCTION, sizeof(FuncBag) + sizeof(void *), name,
+                        narg, args, PARI_FUNC_HANDLER2);
+
+    PARI_FUNC(func)->symbol = dlsym(RTLD_LOCAL, CHARS_STRING(name));
+
+    return func;
+}
+
 // Table of functions to export
 static StructGVarFunc GVarFuncs [] = {
     GVAR_FUNC(PARI_INIT, 2, "stack, primes"),
@@ -370,10 +540,16 @@ static StructGVarFunc GVarFuncs [] = {
     GVAR_FUNC(PARI_GEN_GET_TYPE, 1, "o"),
     GVAR_FUNC(PARI_GEN_GET_DATA, 1, "o"),
     GVAR_FUNC(INT_TO_PARI_GEN, 1, "i"),
+    GVAR_FUNC(PARI_CALL0, 1, "name"),
+    GVAR_FUNC(PARI_CALL1, 2, "name, a1"),
+    GVAR_FUNC(PARI_CALL2, 3, "name, a1, a2"),
+    GVAR_FUNC(PARI_CALL3, 4, "name, a1, a2, a3"),
+    GVAR_FUNC(PARI_CALL4, 5, "name, a1, a2, a3, a4"),
+    GVAR_FUNC(PARI_CALL5, 6, "name, a1, a2, a3, a4, a5"),
+    GVAR_FUNC(PARI_FUNC_WRAP, 2, "name, nargs"),
     { 0 } /* Finish with an empty entry */
 };
 
-extern StructGVarFunc GVarPariFuncs [];
 /******************************************************************************
 *F  InitKernel( <module> )  . . . . . . . . initialise kernel data structures
 */
@@ -381,7 +557,6 @@ static Int InitKernel( StructInitInfo *module )
 {
     /* init filters and functions                                          */
     InitHdlrFuncsFromTable( GVarFuncs );
-    InitHdlrFuncsFromTable( GVarPariFuncs );
 
     ImportGVarFromLibrary("PARI_GEN_Type", &PARI_GEN_Type);
     ImportGVarFromLibrary("PARI_GEN_REFLIST", &PARI_GEN_REFLIST);
@@ -397,7 +572,6 @@ static Int InitLibrary( StructInitInfo *module )
 {
     /* init filters and functions */
     InitGVarFuncsFromTable( GVarFuncs );
-    InitGVarFuncsFromTable( GVarPariFuncs );
 
     /* return success                                                      */
     return 0;
