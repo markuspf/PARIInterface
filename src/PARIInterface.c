@@ -373,6 +373,7 @@ static StructGVarFunc GVarFuncs [] = {
     { 0 } /* Finish with an empty entry */
 };
 
+extern StructGVarFunc GVarPariFuncs [];
 /******************************************************************************
 *F  InitKernel( <module> )  . . . . . . . . initialise kernel data structures
 */
@@ -380,6 +381,7 @@ static Int InitKernel( StructInitInfo *module )
 {
     /* init filters and functions                                          */
     InitHdlrFuncsFromTable( GVarFuncs );
+    InitHdlrFuncsFromTable( GVarPariFuncs );
 
     ImportGVarFromLibrary("PARI_GEN_Type", &PARI_GEN_Type);
     ImportGVarFromLibrary("PARI_GEN_REFLIST", &PARI_GEN_REFLIST);
@@ -395,6 +397,7 @@ static Int InitLibrary( StructInitInfo *module )
 {
     /* init filters and functions */
     InitGVarFuncsFromTable( GVarFuncs );
+    InitGVarFuncsFromTable( GVarPariFuncs );
 
     /* return success                                                      */
     return 0;
