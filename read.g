@@ -5,3 +5,4 @@
 #
 ReadPackage( "PARIInterface", "gap/PARIInterface.gi");
 
+PARIInitialise();
