@@ -46,3 +46,9 @@ function(p)
     coeffs := CoefficientsOfUnivariatePolynomial(p);
     return PARI_POL_GALOIS_GROUP(coeffs);
 end );
+
+InstallMethod( ViewObj, "for a PARI DatObj",
+        [ IsPARIObj ],
+function(o)
+    Print("<PARI GEN>");
+end);
