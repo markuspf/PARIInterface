@@ -5,7 +5,9 @@
 #include <pari/pari.h>
 #include "src/compiled.h"          /* GAP headers */
 
-#include <gmp.h>
+#include <gmp.h>                   /* mp_limb_t :/ */
+
+#include "PARIInterface.h"
 
 #define PARI_T_GEN 0          // Generic PARI object
 
@@ -38,7 +40,7 @@ static GEN IntToPariGEN(Obj o);
 // because we have full control over garbage collection
 // We should never get unreachable loops in the dependency graph because
 // never stick GAP objects into PARI objects
-static Obj NewPARIGEN(GEN data)
+Obj NewPARIGEN(GEN data)
 {
     Obj o;
 
@@ -267,7 +269,7 @@ Obj FuncPARI_POL_GALOIS_GROUP(Obj self, Obj poly)
 {
     GEN v, w;
 
-    v = PariGENUniPoly(poly);
+    v = CoeffListToPariGEN(poly);
     w = polgalois(v, DEFAULTPREC);
 
     return PariGENToObj(w);
@@ -335,7 +337,23 @@ Obj FuncPARI_CLOSE(Obj self)
     pari_close();
 }
 
-typedef Obj (* GVarFunc)(/*arguments*/);
+/* These are good examples of the pattern
+   of calls into PARI from GAP. These functions
+   could be auto-generated */
+
+static Obj FuncPARI_output(Obj self, Obj x)
+{
+    output(PARI_DAT_GEN(x));
+    return 0;
+}
+
+static Obj FuncPARI_gcdii(Obj self, Obj x, Obj y)
+{
+    GEN x_ = PARI_DAT_GEN(x);
+    GEN y_ = PARI_DAT_GEN(y);
+
+    return NewPARIGEN(gcdii(x_, y_));
+}
 
 // Table of functions to export
 static StructGVarFunc GVarFuncs [] = {
