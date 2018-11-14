@@ -8,8 +8,6 @@
 #include <gmp.h>                   /* mp_limb_t :/ */
 #include <dlfcn.h>
 
-#include "PARIInterface.h"
-
 #define PARI_T_GEN 0          // Generic PARI object
 
 #define PARI_DAT_WORDS (sizeof(Obj) * 4)
