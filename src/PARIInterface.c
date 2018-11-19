@@ -92,7 +92,7 @@ static Obj PariVecSmallToList(GEN v)
     SET_LEN_PLIST(res, len - 1);
 
     for(Int i = 1; i < len; i++) {
-        SET_ELM_PLIST(res, i, INTOBJ_INT(itos(gel(v,i))));
+        SET_ELM_PLIST(res, i, ObjInt_Int(itos(gel(v,i))));
         CHANGED_BAG(res);
     }
     return res;
@@ -111,14 +111,18 @@ static Obj PariIntToIntObj(GEN v)
         ErrorQuit("v has to be a PARI t_INT", 0L, 0L);
 
     size = signe(v) * (lgefint (v) - 2);
-    return MakeObjInt(int_LSW(v), size);
+    return MakeObjInt((const UInt *)int_LSW(v), size);
 }
 
 static Obj PariFracToRatObj(GEN v)
 {
-    Obj res;
+    Obj num = PariGENToObj(gel(v, 1));
+    Obj den = PariGENToObj(gel(v, 2));
 
-    res = NewBag(T_RAT, 2 * sizeof(Obj));
+    if (den == INTOBJ_INT(1))
+        return num;
+
+    Obj res = NewBag(T_RAT, 2 * sizeof(Obj));
     SET_NUM_RAT(res, PariGENToObj(gel(v, 1)));
     SET_DEN_RAT(res, PariGENToObj(gel(v, 2)));
 
@@ -244,7 +248,7 @@ static GEN ObjToPariGEN(Obj obj)
     if (IS_INT(obj))
         return IntToPariGEN(obj);
     else
-        ErrorQuit("ObjToPariGEN: not a supported type: %s", TNAM_OBJ(obj), 0L);
+        ErrorQuit("ObjToPariGEN: not a supported type: %s", (Int)TNAM_OBJ(obj), 0L);
 }
 
 
@@ -278,7 +282,7 @@ Obj FuncPARI_POL_FACTOR_MOD_P(Obj self, Obj poly, Obj p)
 {
     GEN v, w, x;
 
-    v = PariGENUniPoly(poly);
+    v = CoeffListToPariGEN(poly);
     x = stoi(Int8_ObjInt(p));
     w = FpX_factor(v, x);
 
@@ -357,7 +361,7 @@ static Obj FuncPARI_gcdii(Obj self, Obj x, Obj y)
 static Obj FuncPARI_CALL0(Obj self, Obj name)
 {
     GEN (*func)() = 0;
-    func = dlsym(RTLD_LOCAL, CHARS_STRING(name));
+    func = dlsym(0L, CONST_CSTR_STRING(name));
     if(!func)
         ErrorQuit("function not found", 0L, 0L);
     return NewPARIGEN((*func)());
@@ -367,7 +371,7 @@ static Obj FuncPARI_CALL1(Obj self, Obj name, Obj a1)
 {
     GEN (*func)(GEN) = 0;
     GEN g1 = PARI_DAT_GEN(a1);
-    func = dlsym(RTLD_LOCAL, CHARS_STRING(name));
+    func = dlsym(0L, CONST_CSTR_STRING(name));
     if(!func)
         ErrorQuit("function not found", 0L, 0L);
     return NewPARIGEN((*func)(g1));
@@ -378,7 +382,7 @@ static Obj FuncPARI_CALL2(Obj self, Obj name, Obj a1, Obj a2)
     GEN (*func)(GEN,GEN) = 0;
     GEN g1 = PARI_DAT_GEN(a1);
     GEN g2 = PARI_DAT_GEN(a2);
-    func = dlsym(RTLD_LOCAL, CHARS_STRING(name));
+    func = dlsym(0L, CONST_CSTR_STRING(name));
     if(!func)
        ErrorQuit("function not found", 0L, 0L);
     return NewPARIGEN((*func)(g1,g2));
@@ -390,7 +394,7 @@ static Obj FuncPARI_CALL3(Obj self, Obj name, Obj a1, Obj a2, Obj a3)
     GEN g1 = PARI_DAT_GEN(a1);
     GEN g2 = PARI_DAT_GEN(a2);
     GEN g3 = PARI_DAT_GEN(a3);
-    func = dlsym(RTLD_LOCAL, CHARS_STRING(name));
+    func = dlsym(0L, CONST_CSTR_STRING(name));
     if(!func)
         ErrorQuit("function not found", 0L, 0L);
     return NewPARIGEN((*func)(g1,g2,g3));
@@ -403,7 +407,7 @@ static Obj FuncPARI_CALL4(Obj self, Obj name, Obj a1, Obj a2, Obj a3, Obj a4)
     GEN g2 = PARI_DAT_GEN(a2);
     GEN g3 = PARI_DAT_GEN(a3);
     GEN g4 = PARI_DAT_GEN(a4);
-    func = dlsym(RTLD_LOCAL, CHARS_STRING(name));
+    func = dlsym(0L, CONST_CSTR_STRING(name));
     if(!func)
         ErrorQuit("function not found", 0L, 0L);
     return NewPARIGEN((*func)(g1,g2,g3,g4));
@@ -417,38 +421,33 @@ static Obj FuncPARI_CALL5(Obj self, Obj name, Obj a1, Obj a2, Obj a3, Obj a4, Ob
     GEN g3 = PARI_DAT_GEN(a3);
     GEN g4 = PARI_DAT_GEN(a4);
     GEN g5 = PARI_DAT_GEN(a5);
-    func = dlsym(RTLD_LOCAL, CHARS_STRING(name));
+    func = dlsym(0L, CONST_CSTR_STRING(name));
     if(!func)
         ErrorQuit("function not found", 0L, 0L);
     return NewPARIGEN((*func)(g1,g2,g3,g4,g5));
 }
 
-typedef struct {
-    FuncBag func;
-    void *symbol;
-} PariFuncBag;
-
-static inline PariFuncBag * PARI_FUNC(Obj func)
+static inline void * PARI_FUNC(Obj func)
 {
-    return (PariFuncBag *)ADDR_OBJ(func);
+    return (void *)FEXS_FUNC(func);
 }
 
 static Obj PARI_FUNC_HANDLER0(Obj self)
 {
-    GEN (*func)() = PARI_FUNC(self)->symbol;
+    GEN (*func)() = PARI_FUNC(self);
     return NewPARIGEN((*func)());
 }
 
 static Obj PARI_FUNC_HANDLER1(Obj self, Obj a1)
 {
-    GEN (*func)(GEN) = PARI_FUNC(self)->symbol;
+    GEN (*func)(GEN) = PARI_FUNC(self);
     GEN g1 = PARI_DAT_GEN(a1);
     return NewPARIGEN((*func)(g1));
 }
 
 static Obj PARI_FUNC_HANDLER2(Obj self, Obj a1, Obj a2)
 {
-    GEN (*func)(GEN,GEN) = PARI_FUNC(self)->symbol;
+    GEN (*func)(GEN,GEN) = PARI_FUNC(self);
     GEN g1 = PARI_DAT_GEN(a1);
     GEN g2 = PARI_DAT_GEN(a2);
     return NewPARIGEN((*func)(g1,g2));
@@ -456,7 +455,7 @@ static Obj PARI_FUNC_HANDLER2(Obj self, Obj a1, Obj a2)
 
 static Obj PARI_FUNC_HANDLER3(Obj self, Obj a1, Obj a2, Obj a3)
 {
-    GEN (*func)(GEN,GEN,GEN) = PARI_FUNC(self)->symbol;
+    GEN (*func)(GEN,GEN,GEN) = PARI_FUNC(self);
     GEN g1 = PARI_DAT_GEN(a1);
     GEN g2 = PARI_DAT_GEN(a2);
     GEN g3 = PARI_DAT_GEN(a3);
@@ -465,7 +464,7 @@ static Obj PARI_FUNC_HANDLER3(Obj self, Obj a1, Obj a2, Obj a3)
 
 static Obj PARI_FUNC_HANDLER4(Obj self, Obj a1, Obj a2, Obj a3, Obj a4)
 {
-    GEN (*func)(GEN,GEN,GEN,GEN) = PARI_FUNC(self)->symbol;
+    GEN (*func)(GEN,GEN,GEN,GEN) = PARI_FUNC(self);
     GEN g1 = PARI_DAT_GEN(a1);
     GEN g2 = PARI_DAT_GEN(a2);
     GEN g3 = PARI_DAT_GEN(a3);
@@ -475,7 +474,7 @@ static Obj PARI_FUNC_HANDLER4(Obj self, Obj a1, Obj a2, Obj a3, Obj a4)
 
 static Obj PARI_FUNC_HANDLER5(Obj self, Obj a1, Obj a2, Obj a3, Obj a4, Obj a5)
 {
-    GEN (*func)(GEN,GEN,GEN,GEN,GEN) = PARI_FUNC(self)->symbol;
+    GEN (*func)(GEN,GEN,GEN,GEN,GEN) = PARI_FUNC(self);
     GEN g1 = PARI_DAT_GEN(a1);
     GEN g2 = PARI_DAT_GEN(a2);
     GEN g3 = PARI_DAT_GEN(a3);
@@ -515,11 +514,10 @@ static Obj FuncPARI_FUNC_WRAP(Obj self, Obj name, Obj args)
         ErrorQuit("cannot handle functions with %i arguments", narg, 0L);
         break;
     }
-    func = NewFunctionT(T_FUNCTION, sizeof(FuncBag) + sizeof(void *), name,
-                        narg, args, PARI_FUNC_HANDLER2);
+    func = NewFunctionT(T_FUNCTION, sizeof(FuncBag), name, narg,
+                        args, handler);
 
-    PARI_FUNC(func)->symbol = dlsym(RTLD_LOCAL, CHARS_STRING(name));
-
+    SET_FEXS_FUNC(func, dlsym(0L, CONST_CSTR_STRING(name)));
     return func;
 }
 
