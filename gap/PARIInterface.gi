@@ -5,22 +5,22 @@
 #
 InstallGlobalFunction( PARIInitialise,
 function(args...)
-    local stack, primes;
+    local stack, stackmax;
 
     if _PARIINTERFACE_INITIALISED then
         PARI_CLOSE();
     fi;
 
     stack := _PARIINTERFACE_STACK_DEFAULT;
-    primes := _PARIINTERFACE_PRIMES_DEFAULT;
+    stackmax := _PARIINTERFACE_STACKMAX_DEFAULT;
 
     if IsBound(args[1]) and IsPosInt(args[1]) then
         stack := args[1];
     fi;
     if IsBound(args[2]) and IsPosInt(args[2]) then
-        primes := args[2];
+        stackmax := args[2];
     fi;
-    PARI_INIT(stack, primes);
+    PARI_INIT(stack, stackmax);
     _PARIINTERFACE_INITIALISED := true;
     return PARI_GET_VERSION();
 end);

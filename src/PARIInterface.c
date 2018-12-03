@@ -321,17 +321,18 @@ Obj FuncPARI_GET_VERSION(Obj self)
     return PariGENToObj(pari_version());
 }
 
-Obj FuncPARI_INIT(Obj self, Obj stack, Obj primes)
+Obj FuncPARI_INIT(Obj self, Obj stack, Obj stackmax)
 {
     if(!IS_INTOBJ(stack))
         ErrorQuit("<stack> has to be an integer", 0L, 0L);
-    if(!IS_INTOBJ(primes))
-        ErrorQuit("<primes> has to be an integer", 0L, 0L);
+    if(!IS_INTOBJ(stackmax))
+        ErrorQuit("<stackmax> has to be an integer", 0L, 0L);
 
     size_t size = INT_INTOBJ(stack);
-    ulong maxprime = INT_INTOBJ(primes);
+    size_t sizemax = INT_INTOBJ(stackmax);
 
-    pari_init_opts(size, maxprime, INIT_DFTm|INIT_JMPm);
+    pari_init_opts(size, 1000000, INIT_DFTm|INIT_JMPm);
+    paristack_setsize(size, sizemax);
     return PariGENToObj(pari_version());
 }
 
@@ -523,7 +524,7 @@ static Obj FuncPARI_FUNC_WRAP(Obj self, Obj name, Obj args)
 
 // Table of functions to export
 static StructGVarFunc GVarFuncs [] = {
-    GVAR_FUNC(PARI_INIT, 2, "stack, primes"),
+    GVAR_FUNC(PARI_INIT, 2, "stack, stackmax"),
     GVAR_FUNC(PARI_CLOSE, 0, ""),
     GVAR_FUNC(PARI_GET_VERSION, 0, ""),
     GVAR_FUNC(PARI_GEN_ROUNDTRIP, 1, "x"),
