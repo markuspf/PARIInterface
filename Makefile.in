@@ -123,7 +123,7 @@ PARI_CPPFLAGS = -I $(PARI_PREFIX)/include
 PARI_LDFLAGS = -R $(TOP)/$(PARI_PREFIX)/lib -L$(PARI_PREFIX)/lib -lpari
 
 EXTRA_CPPFLAGS += $(PARI_CPPFLAGS)
-EXTRA_LDFLAGS += $(PARI_LDFLAGS) 
+EXTRA_LDFLAGS += $(PARI_LDFLAGS)
 EXTERN_FILES += $(PARI_FILES)
 
 ########################################################################
@@ -140,12 +140,22 @@ pariclean:
 .PHONY: pariclean
 
 else
+ifneq ($(PARI_PREFIX),)
+PARI_FILES := $(PARI_PREFIX)/lib/libpari.so
+PARI_CPPFLAGS = -I $(PARI_PREFIX)/include
+PARI_LDFLAGS = -R $(TOP)/$(PARI_PREFIX)/lib -L$(PARI_PREFIX)/lib -lpari -Wl,-rpath=$(PARI_PREFIX)/lib
+
+EXTRA_CPPFLAGS += $(PARI_CPPFLAGS)
+EXTRA_LDFLAGS += $(PARI_LDFLAGS)
+EXTERN_FILES += $(PARI_FILES)
+else
 
 EXTRA_LDFLAGS += -lpari
 
 pari:
 	echo "Using system PARI, nothing to be done"
 
+endif
 endif
 
 $(OBJS): $(EXTERN_FILES)
