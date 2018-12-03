@@ -331,7 +331,7 @@ Obj FuncPARI_INIT(Obj self, Obj stack, Obj primes)
     size_t size = INT_INTOBJ(stack);
     ulong maxprime = INT_INTOBJ(primes);
 
-    pari_init(size, maxprime);
+    pari_init_opts(size, maxprime, INIT_DFTm|INIT_JMPm);
     return PariGENToObj(pari_version());
 }
 
