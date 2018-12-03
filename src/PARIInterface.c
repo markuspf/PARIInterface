@@ -98,20 +98,43 @@ static Obj PariVecSmallToList(GEN v)
     return res;
 }
 
-/*
- * According to Bill Allombert PARI has support for
- * both MSW and LSW storage of ints,
- *  We only support LSW. If you want MSW, submit a patch
- */
+#ifdef PARI_KERNEL_NONE
+static void
+xmpn_mirror(ulong *x, long n)
+{
+  long i;
+  for(i = 0; i < (n>>1); i++)
+  {
+    ulong m=x[i];
+    x[i]=x[n-1-i];
+    x[n-1-i]=m;
+  }
+}
+#define GMP_TO_PARI(a,b) xmpn_mirror(a, b);
+#define PARI_TO_GMP(a,b) xmpn_mirror(a, b);
+#else
+#define GMP_TO_PARI(a,b)
+#define PARI_TO_GMP(a,b)
+#endif
+
+
 static Obj PariIntToIntObj(GEN v)
 {
     long size;
+    Obj res;
 
     if (typ (v) != t_INT)
         ErrorQuit("v has to be a PARI t_INT", 0L, 0L);
 
     size = signe(v) * (lgefint (v) - 2);
-    return MakeObjInt((const UInt *)int_LSW(v), size);
+
+    PARI_TO_GMP(v+2, lgefint (v) - 2)
+
+    res = MakeObjInt((const UInt *)(v+2), size);
+
+    GMP_TO_PARI(v+2, lgefint (v) - 2)
+
+    return res;
 }
 
 static Obj PariFracToRatObj(GEN v)
@@ -212,9 +235,9 @@ static GEN IntToPariGEN(Obj o)
         sign = IS_POS_INT(o) ? 1 : -1;
 
         r = cgeti(size + 2);
-        // TODO: This looks a bit mysterious
         r[1] = evalsigne(sign) | evallgefint(size + 2);
-        memcpy(int_W(r,0), ADDR_INT(o), size * sizeof(mp_limb_t));
+        memcpy(r+2, ADDR_INT(o), size * sizeof(mp_limb_t));
+        GMP_TO_PARI(r+2, lgefint(r)-2)
     }
     return r;
 }
