@@ -155,7 +155,7 @@ static Obj PariFracToRatObj(GEN v)
 static Obj PariPolToList(GEN v)
 {
     Int len = lg(v);
-    Obj res = NEW_PLIST(T_PLIST, len - 3);
+    Obj res = NEW_PLIST(T_PLIST, len - 2);
     SET_LEN_PLIST(res, len - 2);
     for(Int i = 2; i<len; i++) {
         SET_ELM_PLIST(res, i-1, PariGENToObj(gel(v,i)));
