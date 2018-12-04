@@ -92,7 +92,7 @@ static Obj PariVecSmallToList(GEN v)
     SET_LEN_PLIST(res, len - 1);
 
     for(Int i = 1; i < len; i++) {
-        SET_ELM_PLIST(res, i, ObjInt_Int(itos(gel(v,i))));
+        SET_ELM_PLIST(res, i, ObjInt_Int(v[i]));
         CHANGED_BAG(res);
     }
     return res;
