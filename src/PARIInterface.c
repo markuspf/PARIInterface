@@ -346,16 +346,15 @@ Obj FuncPARI_GET_VERSION(Obj self)
 
 Obj FuncPARI_INIT(Obj self, Obj stack, Obj stackmax)
 {
-    if(!IS_INTOBJ(stack))
-        ErrorQuit("<stack> has to be an integer", 0L, 0L);
-    if(!IS_INTOBJ(stackmax))
-        ErrorQuit("<stackmax> has to be an integer", 0L, 0L);
+    RequireInt("PARI_INIT", stack, "stack");
+    RequireInt("PARI_INIT", stackmax, "stackmax");
 
-    size_t size = INT_INTOBJ(stack);
+    size_t stack_size = UInt8_ObjInt(stack);
+    size_t stack_maxsize = UInt8_ObjInt(stackmax);
 
-    pari_init_opts(size, 1000000, INIT_DFTm|INIT_JMPm);
+    pari_init_opts(stack_size, stack_maxsize, INIT_DFTm|INIT_JMPm);
 #if PARI_VERSION_CODE >= PARI_VERSION(2,9,0)
-    paristack_setsize(size, UInt8_ObjInt(stackmax));
+    paristack_setsize(stack_size, stack_maxsize);
 #endif
     return PariGENToObj(pari_version());
 }
