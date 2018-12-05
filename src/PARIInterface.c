@@ -296,6 +296,8 @@ static GEN ObjToPariGEN(Obj obj)
         return Perm2ToPariGEN(obj);
     else if (IS_PERM4(obj))
         return Perm4ToPariGEN(obj);
+    else if (IS_LIST(obj))
+        return ListToPariVec(obj);
     else
         ErrorQuit("ObjToPariGEN: not a supported type: %s", (Int)TNAM_OBJ(obj), 0L);
 }

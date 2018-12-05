@@ -9,6 +9,8 @@ gap> a := INT_TO_PARI_GEN(4913);
 PARI(4913)
 gap> PARI_GEN_ROUNDTRIP((1,3)(2,4,5));
 [ 3, 4, 1, 5, 2 ]
+gap> PARI_GEN_ROUNDTRIP([289, (1,3),(2,4,5)]);
+[ 289, [ 3, 2, 1 ], [ 1, 4, 3, 5, 2 ] ]
 gap> PARI_MULT(0,2);
 0
 gap> PARI_MULT(2,0);
