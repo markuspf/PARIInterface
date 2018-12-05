@@ -330,42 +330,61 @@ Obj FuncPARI_UNIPOLY(Obj self, Obj poly)
 
 Obj FuncPARI_POL_GALOIS_GROUP(Obj self, Obj poly)
 {
+    pari_sp av = avma;
     GEN v, w;
+    Obj r;
 
     v = CoeffListToPariGEN(poly);
     w = polgalois(v, DEFAULTPREC);
 
-    return PariGENToObj(w);
+    r = PariGENToObj(w);
+    avma = av;
+
+    return r;
 }
 
 Obj FuncPARI_POL_FACTOR_MOD_P(Obj self, Obj poly, Obj p)
 {
+    pari_sp av = avma;
     GEN v, w, x;
+    Obj r;
 
     v = CoeffListToPariGEN(poly);
     x = stoi(Int_ObjInt(p));
     w = FpX_factor(v, x);
 
-    return PariGENToObj(w);
+    r = PariGENToObj(w);
+    avma = av;
+
+    return r;
 }
 
 Obj FuncPARI_GEN_ROUNDTRIP(Obj self, Obj x)
 {
-    return PariGENToObj(ObjToPariGEN(x));
+    pari_sp av = avma;
+    Obj r = PariGENToObj(ObjToPariGEN(x));
+    avma = av;
+    return r;
 }
 
 Obj FuncPARI_MULT(Obj self, Obj x, Obj y)
 {
+    pari_sp av = avma;
     GEN a,b;
+    Obj r;
 
     a = ObjToPariGEN(x);
     b = ObjToPariGEN(y);
 
-    return PariGENToObj(mpmul(a,b));
+    r = PariGENToObj(gmul(a,b));
+    avma = av;
+
+    return r;
 }
 
 Obj FuncPARI_FACTOR_INT(Obj self, Obj x)
 {
+    pari_sp av = avma;
     GEN y, f;
     Obj r;
 
@@ -373,12 +392,16 @@ Obj FuncPARI_FACTOR_INT(Obj self, Obj x)
     f = factorint(y, 0);
     r = PariGENToObj(f);
 
+    avma = av;
     return r;
 }
 
 Obj FuncPARI_GET_VERSION(Obj self)
 {
-    return PariGENToObj(pari_version());
+    pari_sp av = avma;
+    Obj r = PariGENToObj(pari_version());
+    avma = av;
+    return r;
 }
 
 Obj FuncPARI_INIT(Obj self, Obj stack, Obj stackmax)
@@ -393,7 +416,7 @@ Obj FuncPARI_INIT(Obj self, Obj stack, Obj stackmax)
 #if PARI_VERSION_CODE >= PARI_VERSION(2,9,0)
     paristack_setsize(stack_size, stack_maxsize);
 #endif
-    return PariGENToObj(pari_version());
+    return FuncPARI_GET_VERSION(self);
 }
 
 Obj FuncPARI_CLOSE(Obj self)
