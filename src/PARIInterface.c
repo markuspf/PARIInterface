@@ -355,7 +355,7 @@ Obj FuncPARI_INIT(Obj self, Obj stack, Obj stackmax)
 
     pari_init_opts(size, 1000000, INIT_DFTm|INIT_JMPm);
 #if PARI_VERSION_CODE >= PARI_VERSION(2,9,0)
-    paristack_setsize(size, INT_INTOBJ(stackmax));
+    paristack_setsize(size, UInt8_ObjInt(stackmax));
 #endif
     return PariGENToObj(pari_version());
 }
