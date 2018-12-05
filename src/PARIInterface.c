@@ -352,10 +352,11 @@ Obj FuncPARI_INIT(Obj self, Obj stack, Obj stackmax)
         ErrorQuit("<stackmax> has to be an integer", 0L, 0L);
 
     size_t size = INT_INTOBJ(stack);
-    size_t sizemax = INT_INTOBJ(stackmax);
 
     pari_init_opts(size, 1000000, INIT_DFTm|INIT_JMPm);
-    paristack_setsize(size, sizemax);
+#if PARI_VERSION_CODE >= PARI_VERSION(2,9,0)
+    paristack_setsize(size, INT_INTOBJ(stackmax));
+#endif
     return PariGENToObj(pari_version());
 }
 
