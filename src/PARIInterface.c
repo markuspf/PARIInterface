@@ -278,6 +278,15 @@ static GEN ObjToPariGEN(Obj obj)
 //
 // GAP Facing functions
 //
+
+Obj FuncPARI_GEN_TO_STR(Obj self, Obj o)
+{
+  char * str = GENtostr(PARI_DAT_GEN(o));
+  Obj s = MakeString(str);
+  pari_free(str);
+  return s;
+}
+
 Obj FuncPARI_VECINT(Obj self, Obj list)
 {
     GEN v = ListToPariVec(list);
@@ -560,6 +569,7 @@ static StructGVarFunc GVarFuncs [] = {
     GVAR_FUNC(PARI_GEN_GET_TYPE, 1, "o"),
     GVAR_FUNC(PARI_GEN_GET_DATA, 1, "o"),
     GVAR_FUNC(INT_TO_PARI_GEN, 1, "i"),
+    GVAR_FUNC(PARI_GEN_TO_STR, 1, "o"),
     GVAR_FUNC(PARI_CALL0, 1, "name"),
     GVAR_FUNC(PARI_CALL1, 2, "name, a1"),
     GVAR_FUNC(PARI_CALL2, 3, "name, a1, a2"),

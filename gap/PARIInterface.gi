@@ -50,5 +50,5 @@ end );
 InstallMethod( ViewObj, "for a PARI DatObj",
         [ IsPARIObj ],
 function(o)
-    Print("<PARI GEN>");
+    Print("PARI(",PARI_GEN_TO_STR(o),")");
 end);

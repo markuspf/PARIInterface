@@ -5,6 +5,8 @@ gap> PARIGaloisGroup(p);
 [ 20, -1, 1, "F(5) = 5:4" ]
 gap> PARIClose();;
 gap> PARIInitialise(100000,2^24);;
+gap> a := INT_TO_PARI_GEN(4913);
+PARI(4913)
 gap> PARI_MULT(0,2);
 0
 gap> PARI_MULT(2,0);
