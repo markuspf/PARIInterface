@@ -243,6 +243,28 @@ static GEN ListToPariVecsmall(Obj list)
     return v;
 }
 
+static GEN ListToPariVecVecsmall(Obj list)
+{
+    UInt len = LEN_LIST(list);
+    GEN v = cgetg(len + 1, t_VEC);
+    for(UInt i = 1; i <= len; i++ ) {
+        Obj elt = ELM_LIST(list, i);
+        gel(v, i) = ListToPariVecsmall(elt);
+    }
+    return v;
+}
+
+static GEN ListToPariVecVecVecsmall(Obj list)
+{
+    UInt len = LEN_LIST(list);
+    GEN v = cgetg(len + 1, t_VEC);
+    for(UInt i = 1; i <= len; i++ ) {
+        Obj elt = ELM_LIST(list, i);
+        gel(v, i) = ListToPariVecVecsmall(elt);
+    }
+    return v;
+}
+
 static GEN ListToPariVec(Obj list)
 {
     UInt len = LEN_LIST(list);
@@ -330,6 +352,20 @@ Obj FuncPARI_VECINT(Obj self, Obj list)
 {
     GEN v = ListToPariVec(list);
     return PariGENToObj(v);
+}
+
+Obj FuncPARI_VECVECSMALL(Obj self, Obj list)
+{
+    GEN v = ListToPariVecVecsmall(list);
+
+    return NewPARIGEN(v);
+}
+
+Obj FuncPARI_VECVECVECSMALL(Obj self, Obj list)
+{
+    GEN v = ListToPariVecVecVecsmall(list);
+
+    return NewPARIGEN(v);
 }
 
 Obj FuncPARI_UNIPOLY(Obj self, Obj poly)
@@ -624,6 +660,8 @@ static StructGVarFunc GVarFuncs [] = {
     GVAR_FUNC(PARI_GEN_ROUNDTRIP, 1, "x"),
     GVAR_FUNC(PARI_MULT, 2, "a, b"),
     GVAR_FUNC(PARI_VECINT, 1, "list"),
+    GVAR_FUNC(PARI_VECVECSMALL, 1, "list"),
+    GVAR_FUNC(PARI_VECVECVECSMALL, 1, "list"),
     GVAR_FUNC(PARI_UNIPOLY, 1, "poly"),
     GVAR_FUNC(PARI_POL_GALOIS_GROUP, 1, "poly"),
     GVAR_FUNC(PARI_POL_FACTOR_MOD_P, 2, "poly, p"),
