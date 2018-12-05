@@ -210,6 +210,28 @@ static Obj PariGENToObj(GEN v)
 static GEN ObjToPariGEN(Obj obj);
 static GEN ListToPariVec(Obj list);
 
+static GEN Perm2ToPariGEN(Obj perm)
+{
+    UInt deg = DEG_PERM2(perm);
+    const UInt2 * pt = CONST_ADDR_PERM2(perm);
+    GEN  v = cgetg(deg + 1, t_VECSMALL);
+
+    for (UInt i = 1; i <= deg; i++)
+        v[i] = pt[i-1] + 1;
+    return v;
+}
+
+static GEN Perm4ToPariGEN(Obj perm)
+{
+    UInt deg = DEG_PERM4(perm);
+    const UInt4 * pt = CONST_ADDR_PERM4(perm);
+    GEN  v = cgetg(deg + 1, t_VECSMALL);
+
+    for (UInt i = 1; i <= deg; i++)
+        v[i] = pt[i-1] + 1;
+    return v;
+}
+
 static GEN ListToPariVec(Obj list)
 {
     UInt len = LEN_LIST(list);
@@ -270,6 +292,10 @@ static GEN ObjToPariGEN(Obj obj)
 {
     if (IS_INT(obj))
         return IntToPariGEN(obj);
+    else if (IS_PERM2(obj))
+        return Perm2ToPariGEN(obj);
+    else if (IS_PERM4(obj))
+        return Perm4ToPariGEN(obj);
     else
         ErrorQuit("ObjToPariGEN: not a supported type: %s", (Int)TNAM_OBJ(obj), 0L);
 }

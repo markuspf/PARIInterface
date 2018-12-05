@@ -7,6 +7,8 @@ gap> PARIClose();;
 gap> PARIInitialise(100000,2^24);;
 gap> a := INT_TO_PARI_GEN(4913);
 PARI(4913)
+gap> PARI_GEN_ROUNDTRIP((1,3)(2,4,5));
+[ 3, 4, 1, 5, 2 ]
 gap> PARI_MULT(0,2);
 0
 gap> PARI_MULT(2,0);
