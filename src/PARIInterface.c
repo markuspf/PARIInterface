@@ -456,8 +456,8 @@ Obj FuncPARI_INIT(Obj self, Obj stack, Obj stackmax)
     RequireInt("PARI_INIT", stack, "stack");
     RequireInt("PARI_INIT", stackmax, "stackmax");
 
-    size_t stack_size = UInt8_ObjInt(stack);
-    size_t stack_maxsize = UInt8_ObjInt(stackmax);
+    size_t stack_size = UInt_ObjInt(stack);
+    size_t stack_maxsize = UInt_ObjInt(stackmax);
 
     pari_init_opts(stack_size, stack_maxsize, INIT_DFTm|INIT_JMPm);
 #if PARI_VERSION_CODE >= PARI_VERSION(2,9,0)
