@@ -232,6 +232,17 @@ static GEN Perm4ToPariGEN(Obj perm)
     return v;
 }
 
+static GEN ListToPariVecsmall(Obj list)
+{
+    UInt len = LEN_LIST(list);
+    GEN v = cgetg(len + 1, t_VECSMALL);
+    for(UInt i = 1; i <= len; i++ ) {
+        Obj elt = ELM_LIST(list, i);
+        v[i] = UInt_ObjInt(elt);
+    }
+    return v;
+}
+
 static GEN ListToPariVec(Obj list)
 {
     UInt len = LEN_LIST(list);
