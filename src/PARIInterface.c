@@ -453,8 +453,8 @@ Obj FuncPARI_GET_VERSION(Obj self)
 
 Obj FuncPARI_INIT(Obj self, Obj stack, Obj stackmax)
 {
-    RequireInt("PARI_INIT", stack, "stack");
-    RequireInt("PARI_INIT", stackmax, "stackmax");
+    RequireInt("PARI_INIT", stack);
+    RequireInt("PARI_INIT", stackmax);
 
     size_t stack_size = UInt_ObjInt(stack);
     size_t stack_maxsize = UInt_ObjInt(stackmax);
